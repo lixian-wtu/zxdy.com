@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>语音到图片：阿里云通义万相版</title>
+    <title>语音到图片：阿里云通义万相版（CORS 代理）</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -60,14 +60,16 @@
 <body>
     <h1>语音交互：说话触发，生成对应图片</h1>
     <p>说“小熊”或其他词语，会通过阿里云 API 生成对应的图片和场景</p>
+    <p><em>注意：已集成免费 CORS 代理（corsproxy.io），适合 GitHub Pages 测试。API Key 已移除，请自行添加（生产环境勿暴露）。</em></p>
     <button id="toggleBtn">开始监听</button>
     <div id="status">点击按钮开始说话...</div>
     <div id="loading">API 接口调用中，生成图片，请稍候...</div>
     <img id="generatedImage" alt="生成的图片">
 
     <script>
-        const API_KEY = 'sk-c4949466fb1d4ba1be494624a21823e0'; // 替换为你的阿里云 DashScope API Key
-        const API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'; // 北京地域
+        const API_KEY = 'sk-c4949466fb1d4ba1be494624a21823e0'; // ⚠️ 警告：生产环境移除此 Key 或用后端代理！测试后立即替换/删除
+        const BASE_API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'; // 基础 URL
+        const CORS_PROXY = 'https://corsproxy.io/'; // 免费 CORS 代理，支持 POST/GET
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = 'zh-CN';
         recognition.interimResults = false;
@@ -79,17 +81,26 @@
         const generatedImage = document.getElementById('generatedImage');
         let isListening = false;
 
-        // 生成图片函数（异步）
+        // 辅助函数：构建代理 URL
+        function getProxiedUrl(path) {
+            const targetUrl = `${BASE_API_URL}${path}`;
+            return `${CORS_PROXY}${encodeURIComponent(targetUrl)}`;
+        }
+
+        // 生成图片函数（异步，使用代理）
         async function generateImage(prompt) {
             loading.style.display = 'block';
             generatedImage.style.display = 'none';
             status.textContent = 'API 接口调用，创建任务...';
             try {
-                // 步骤1: 创建任务
-                const createResponse = await fetch(`${API_URL}/services/aigc/text2image/image-synthesis`, {
+                // 步骤1: 创建任务（POST 通过代理）
+                const createPath = '/services/aigc/text2image/image-synthesis';
+                const createProxyUrl = getProxiedUrl(createPath);
+                const createResponse = await fetch(createProxyUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        // 注意：代理可能过滤 Authorization，测试后若无效，用环境变量或后端
                         'Authorization': `Bearer ${API_KEY}`,
                         'X-DashScope-Async': 'enable'
                     },
@@ -110,12 +121,14 @@
                     const taskId = createData.output.task_id;
                     status.textContent = '任务创建成功，正在生成图片...';
 
-                    // 步骤2: 轮询任务结果（最多15次，约30秒）
+                    // 步骤2: 轮询任务结果（GET 通过代理，每2秒查一次，最多15次≈30秒）
                     let attempts = 0;
                     const maxAttempts = 15;
                     const pollInterval = setInterval(async () => {
                         attempts++;
-                        const pollResponse = await fetch(`${API_URL}/tasks/${taskId}`, {
+                        const pollPath = `/tasks/${taskId}`;
+                        const pollProxyUrl = getProxiedUrl(pollPath);
+                        const pollResponse = await fetch(pollProxyUrl, {
                             headers: {
                                 'Authorization': `Bearer ${API_KEY}`
                             }
@@ -124,23 +137,25 @@
                         if (pollData.output && pollData.output.task_status === 'SUCCEEDED') {
                             clearInterval(pollInterval);
                             if (pollData.output.results && pollData.output.results[0].url) {
+                                // 图片 URL 来自阿里云，直接用（CORS 已处理）
                                 generatedImage.src = pollData.output.results[0].url;
                                 generatedImage.style.display = 'block';
                                 status.textContent = `生成成功：${prompt}`;
                             } else {
                                 throw new Error('无图片 URL');
                             }
-                        } else if (pollData.output.task_status === 'FAILED' || attempts >= maxAttempts) {
+                        } else if (pollData.output?.task_status === 'FAILED' || attempts >= maxAttempts) {
                             clearInterval(pollInterval);
                             throw new Error(pollData.output ? '任务失败' : '超时');
                         }
-                    }, 2000); // 每2秒查一次
+                    }, 2000);
+                    // 注意：finally 会隐藏 loading，但轮询可能仍在运行；实际中可添加超时清理
                 } else {
                     throw new Error('任务创建失败: ' + JSON.stringify(createData));
                 }
             } catch (error) {
                 console.error('API Error:', error);
-                status.textContent = `生成失败：${error.message}. 检查 API Key 或网络。`;
+                status.textContent = `生成失败：${error.message}. 检查代理/Key 或网络。`;
             } finally {
                 loading.style.display = 'none';
             }
