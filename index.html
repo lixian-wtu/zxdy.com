@@ -1,246 +1,193 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/logo.png" />
-    <title>ZTE-PointCloud</title>
+    <title>语音到图片：阿里云通义万相版</title>
     <style>
         body {
-             font-family: Arial, sans-serif;
-             /* font-family: 'Source Han Sans', sans-serif; */
-            margin: 0;
-            padding: 0;
-            /* background-color: #bdc8c3; *
-           /* 指定背景图片的路径 */
-            /* background-image: url('标题图片.jpg'); 
-            background-size: cover; 
-            background-position: center;  */
-        }
-        .container {
-            max-width: 1200px;
-            margin:  auto;
-            /* margin-top: 0px; */
-            padding: 20px;
-            /* background-color: #fff; */
-            /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
-        }
-        h1, h2 {
+            font-family: Arial, sans-serif;
             text-align: center;
-            margin-top: 50px;
-            /* margin-bottom: auto; */
+            padding: 50px;
+            background-color: #f0f0f0;
         }
-        h1{
-            font-size: 50px;
-            color: #01a0e9;
+        #generatedImage {
+            max-width: 400px;
+            max-height: 400px;
+            margin-top: 20px;
+            display: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        p{
-            margin-top: 50px;
-            font-size: 20px;
-            text-indent: 2em;
-        }
-        .yinjian-wenzi{
-            margin-top: 50px;
-            font-size: 20px;
-            text-align: center;
-            margin-bottom: auto;
-
-            /* text-indent: 2em; */
-
-        }
-        .main-video {
-            width: 100%;
-            height: 600px;
-            
-        }
-        .header {
-            text-align: center;
-            
-            background-image: url('https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E6%A0%87%E9%A2%98%E5%9B%BE%E7%89%87.jpg');
-            background-size: cover;
-            padding: 100px 50px;
-        }
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-gap: 20px;
-            margin-top: 50px;
-        }
-        .video-grid video {
-            width: 100%;
-            height: auto;
-        }
-        .video-description {
-            text-align: center;
-            margin-top: 10px;
-        }
-        .modal {
-            display: none; /* 默认隐藏 */
-            position: fixed; /* 固定在页面上 */
-            z-index: 1; /* 大于其他内容 */
-            padding-top: 50px; /* 顶部空间 */
-            left: 0;
-            top: 0;
-            width: 100%; /* 全宽 */
-            height: 100%; /* 全高 */
-            background-color: rgba(0,0,0,0.9); /* 背景颜色，带透明度 */
-            overflow: auto; /* 滚动条 */
-        }
-
-        /* 模态框内容 */
-        .modal-content {
-            margin: auto; /* 居中 */
-            display: block;
-            width: auto;
-            max-width: 100%; /* 最大宽度 */
-        }
-
-        /* 关闭按钮 */
-        .close {
-            color: #fff;
-            float: right;
-            font-size: 30px;
-            font-weight: bold;
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
             cursor: pointer;
-            margin-right: 20px;
+            margin: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #f0f3f3ef; /* 导航栏背景颜色 */
-            z-index: 999; /* 确保导航栏在页面内容的上方 */
+        button:hover {
+            background-color: #cc0000;
         }
-
-        nav ul {
-            list-style-type: none;
-            /* margin: 0;
-            padding: 0; */
-            text-align: center;
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
-
-        nav ul li {
-            display: inline;
-            margin-right: 120px; /* 导航项之间的间距 */
+        .stop-btn {
+            background-color: #4CAF50;
         }
-
-        nav ul li a {
-            text-decoration: none;
-            color: #0e0e0e; /* 导航链接颜色 */
-            font-weight: bold;
-            font-size: 25px;
+        .stop-btn:hover {
+            background-color: #45a049;
         }
-
-        /* 关闭按钮鼠标悬停样式 */
-        .close:hover {
-            color: #ccc;
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+            min-height: 20px;
+        }
+        #loading {
+            display: none;
+            margin-top: 10px;
+            color: #666;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <nav>
-        <ul>
-            <li><a href="header" onclick="scrollToSection('header'); return false;">中兴点云</a></li>
-            <li><a href="solution" onclick="scrollToSection('solution'); return false;">解决方案</a></li>
-            <li><a href="hardware" onclick="scrollToSection('hardware'); return false;">硬件支持</a></li>
-            <li><a href="academia" onclick="scrollToSection('academia'); return false;">学术之都</a></li>
-        </ul>
-    </nav>
-    <div class="container">
-        <!-- <div style="height: 100vh;"></div>  -->
-
-        <div class="header"></div>
-
-        <h1 id="header">中兴点云</h1>
-        
-        <p>本项目提出了一种室外点云三维信息提取的方案，用于在室外不同场景下的三维数据信息。本成果的核心思想是，在室外场景下，将工业相机和激光雷达的坐标系进行对齐，使得它们能够在同一坐标系内进行数据采集和处理。其核心技术是室外点云三维信息提取。具体来说，我们搭建了相机和雷达的整套设备用于图像以及点云的采集，并对数据进行校准等操作。随后，我们通过改进的深度神经网络对采集到的数据进行联合标定。最后，我们使用创新的分割网络对联合标定的结果进行分割。
-
-        </p>
-        
-        <video class="main-video" controls>
-           <source src="https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/dianyun.mp4" type="video/mp4">
-        </video>
-
-        <h1 id="solution">解决方案</h1>
-        
-        <div class="video-grid">
-          
-            <div>
-                <img src="https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E5%86%85%E5%8F%82%E6%A0%87%E5%AE%9A%E5%9B%BE.png" alt="内参标定图" style="width: 100%; height: 380px;" onclick="showImage('https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E5%86%85%E5%8F%82%E6%A0%87%E5%AE%9A%E5%9B%BE.png')">
-                <p class="video-description">计算内参</p>
-                <p >拍摄多角度棋盘格照片，计算相机内参，得到相机在空间中的位置和姿态，以及相机的畸变参数。</p>
-            </div>
-            <div>
-                <img src="https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E5%9B%BE%E5%83%8F%E8%A7%92%E7%82%B9%E8%8E%B7%E5%8F%96.png" alt="图像角点获取" style="width: 100%; height: 380px;" onclick="showImage('https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E5%9B%BE%E5%83%8F%E8%A7%92%E7%82%B9%E8%8E%B7%E5%8F%96.png')">
-                <p class="video-description">RGB角点获取</p>
-                <p >相机图像可以提供物体的外观、纹理和颜色等信息，计算角点特征点在图像像素中的坐标。
-                </p>
-            </div>
-            <div>
-                <img src="https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E7%82%B9%E4%BA%91%E8%A7%92%E7%82%B9%E5%9B%BE.png" alt="点云角点图" style="width: 100%; height: 380px;"  onclick="showImage('https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E7%82%B9%E4%BA%91%E8%A7%92%E7%82%B9%E5%9B%BE.png')">
-                <p class="video-description">PointCloud角点获取</p>
-
-                <p >激光点云可以提供物体的三维坐标和距离等信息，计算对应角点在三维点云中的坐标。
-                    </p>
-            </div>
-            <div>
-                <img src="https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E8%AE%A1%E7%AE%97%E5%A4%96%E5%8F%82.png" alt="外参计算图" style="width: 100%; height: 380px;"  onclick="showImage('https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E8%AE%A1%E7%AE%97%E5%A4%96%E5%8F%82.png')">
-                <p class="video-description">计算外参</p>
-
-                <p >根据多场景下对应角点的点云坐标和像素坐标，计算雷达和相机的外参，从而得到相机和雷达在空间中的相对位置，以便融合点云和图像数据。
-                    </p>
-            </div>
-        </div>
-        <h1 id="hardware">技术路线 </h1>
-
-        <img src="https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E6%8A%80%E6%9C%AF%E8%B7%AF%E7%BA%BF%E5%9B%BE.svg" alt="技术路线图" style="width: 100%; height: auto;" ></img>
-
-
-        <!-- <div class="video-grid"> -->
-            <!-- <div> -->
-                <h1>硬件支持</h1> 
-                <img src="https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E9%85%8D%E7%BD%AE.svg" alt="配置" style="width: 100%; height: auto;" ></img>
-                
-
-            <!-- </div> -->
-
-
-
-        <!-- </div> -->
-        <div class="annotation">
-            <h1 id="academia">学术之都</h1> 
-            <img src="https://wzqoss11.oss-cn-beijing.aliyuncs.com/lixan/%E8%AE%BA%E6%96%87.svg" alt="论文" style="width: 100%; height: auto;" ></img>
-         
-
-        </div>
-    </div>
-
-     <!-- 模态框 -->
-     <div id="myModal" class="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <img class="modal-content" id="modalImg">
-    </div>
+    <h1>语音交互：说话触发，生成对应图片</h1>
+    <p>说“小熊”或其他词语，会通过阿里云 API 生成对应的图片和场景</p>
+    <button id="toggleBtn">开始监听</button>
+    <div id="status">点击按钮开始说话...</div>
+    <div id="loading">API 接口调用中，生成图片，请稍候...</div>
+    <img id="generatedImage" alt="生成的图片">
 
     <script>
-        function showImage(imageSrc) {
-            var modal = document.getElementById('myModal');
-            var modalImg = document.getElementById('modalImg');
+        const API_KEY = 'sk-c4949466fb1d4ba1be494624a21823e0'; // 替换为你的阿里云 DashScope API Key
+        const API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'; // 北京地域
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'zh-CN';
+        recognition.interimResults = false;
+        recognition.continuous = true;
 
-            modal.style.display = 'block'; // 显示模态框
-            modalImg.src = imageSrc; // 设置模态框中的图片
+        const toggleBtn = document.getElementById('toggleBtn');
+        const status = document.getElementById('status');
+        const loading = document.getElementById('loading');
+        const generatedImage = document.getElementById('generatedImage');
+        let isListening = false;
+
+        // 生成图片函数（异步）
+        async function generateImage(prompt) {
+            loading.style.display = 'block';
+            generatedImage.style.display = 'none';
+            status.textContent = 'API 接口调用，创建任务...';
+            try {
+                // 步骤1: 创建任务
+                const createResponse = await fetch(`${API_URL}/services/aigc/text2image/image-synthesis`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'X-DashScope-Async': 'enable'
+                    },
+                    body: JSON.stringify({
+                        model: 'wan2.2-t2i-flash', // 极速版，速度快
+                        input: {
+                            prompt: prompt, // 直接用语音文本
+                            negative_prompt: '模糊，低质量' // 可选：避免低质
+                        },
+                        parameters: {
+                            size: '1024*1024',
+                            n: 1 // 生成1张
+                        }
+                    })
+                });
+                const createData = await createResponse.json();
+                if (createData.output && createData.output.task_id) {
+                    const taskId = createData.output.task_id;
+                    status.textContent = '任务创建成功，正在生成图片...';
+
+                    // 步骤2: 轮询任务结果（最多15次，约30秒）
+                    let attempts = 0;
+                    const maxAttempts = 15;
+                    const pollInterval = setInterval(async () => {
+                        attempts++;
+                        const pollResponse = await fetch(`${API_URL}/tasks/${taskId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${API_KEY}`
+                            }
+                        });
+                        const pollData = await pollResponse.json();
+                        if (pollData.output && pollData.output.task_status === 'SUCCEEDED') {
+                            clearInterval(pollInterval);
+                            if (pollData.output.results && pollData.output.results[0].url) {
+                                generatedImage.src = pollData.output.results[0].url;
+                                generatedImage.style.display = 'block';
+                                status.textContent = `生成成功：${prompt}`;
+                            } else {
+                                throw new Error('无图片 URL');
+                            }
+                        } else if (pollData.output.task_status === 'FAILED' || attempts >= maxAttempts) {
+                            clearInterval(pollInterval);
+                            throw new Error(pollData.output ? '任务失败' : '超时');
+                        }
+                    }, 2000); // 每2秒查一次
+                } else {
+                    throw new Error('任务创建失败: ' + JSON.stringify(createData));
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                status.textContent = `生成失败：${error.message}. 检查 API Key 或网络。`;
+            } finally {
+                loading.style.display = 'none';
+            }
         }
 
-        function closeModal() {
-            var modal = document.getElementById('myModal');
-            modal.style.display = 'none'; // 隐藏模态框
-        }
-        function scrollToSection(sectionId) {
-            var section = document.getElementById(sectionId);
-            section.scrollIntoView({ behavior: 'smooth' });
-        }
+        toggleBtn.addEventListener('click', () => {
+            if (!isListening) {
+                recognition.start();
+                toggleBtn.textContent = '停止监听';
+                toggleBtn.classList.add('stop-btn');
+                isListening = true;
+                status.textContent = '正在监听，说“小熊”或其他词语试试！';
+            } else {
+                recognition.stop();
+                toggleBtn.textContent = '开始监听';
+                toggleBtn.classList.remove('stop-btn');
+                isListening = false;
+                status.textContent = '监听已停止。';
+                generatedImage.style.display = 'none';
+            }
+        });
+
+        recognition.onresult = async (event) => {
+            const transcript = event.results[event.results.length - 1][0].transcript;
+            status.textContent = `你说了：${transcript}`;
+            if (transcript.trim()) {
+                await generateImage(transcript);
+            }
+        };
+
+        recognition.onerror = (event) => {
+            status.textContent = '语音识别出错：' + event.error;
+            if (isListening) {
+                toggleBtn.textContent = '开始监听';
+                toggleBtn.classList.remove('stop-btn');
+                isListening = false;
+            }
+        };
+
+        recognition.onend = () => {
+            if (isListening) {
+                toggleBtn.textContent = '开始监听';
+                toggleBtn.classList.remove('stop-btn');
+                isListening = false;
+                status.textContent = '监听结束。点击按钮重新开始。';
+            }
+        };
     </script>
-
-
 </body>
 </html>
