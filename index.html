@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>语音到图片：豆包 Seedream 版（CORS 代理）</title>
+    <title>语音到图片：豆包 Seedream 版</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 50px;
+            padding: 20px;
             background-color: #f0f0f0;
         }
         #generatedImage {
-            max-width: 400px;
-            max-height: 400px;
+            max-width: 100%;
+            max-height: 500px;
             margin-top: 20px;
             display: none;
             border-radius: 10px;
@@ -47,7 +47,7 @@
             margin-top: 20px;
             font-size: 18px;
             color: #333;
-            min-height: 20px;
+            min-height: 24px;
         }
         #loading {
             display: none;
@@ -55,120 +55,166 @@
             color: #666;
             font-style: italic;
         }
+        .error {
+            color: #dc3545;
+        }
+        .success {
+            color: #28a745;
+        }
     </style>
 </head>
 <body>
     <h1>语音交互：说话触发，生成对应图片</h1>
     <p>说“小熊”或其他词语，会通过豆包 Seedream API 生成对应的图片和场景</p>
-    <p><em>注意：已集成免费 CORS 代理（corsproxy.io），适合 GitHub Pages 测试。替换 API Key（生产勿暴露）。</em></p>
     <button id="toggleBtn">开始监听</button>
     <div id="status">点击按钮开始说话...</div>
     <div id="loading">API 接口调用中，生成图片，请稍候...</div>
     <img id="generatedImage" alt="生成的图片">
 
     <script>
-        const API_KEY = 'bbb75c8d-c973-4b43-9409-66cfa88247b5'; // 替换为你的豆包 API Key（Bearer 前缀）
-        const BASE_API_URL = 'https://ark.cn-beijing.volcengineapi.com/api/v3'; // 北京地域
-        const CORS_PROXY = 'https://corsproxy.io/?'; // 免费 CORS 代理（? 后接 i=encoded_url）
+        // 注意：生产环境请将 API Key 移至后端服务，不要在前端暴露
+        const API_KEY = '你的API密钥'; // 替换为你的豆包 API Key（仅保留密钥部分，不含Bearer）
+        const BASE_API_URL = 'https://ark.cn-beijing.volcengineapi.com/api/v3';
+        
+        // 初始化语音识别
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = 'zh-CN';
         recognition.interimResults = false;
         recognition.continuous = true;
+        recognition.maxAlternatives = 1;
 
+        // DOM 元素
         const toggleBtn = document.getElementById('toggleBtn');
         const status = document.getElementById('status');
         const loading = document.getElementById('loading');
         const generatedImage = document.getElementById('generatedImage');
         let isListening = false;
 
-        // 辅助函数：构建代理 URL（代理支持 GET/POST，但 Authorization 可能需测试）
-        function getProxiedUrl(path, method = 'POST') {
-            const targetUrl = `${BASE_API_URL}${path}`;
-            const encodedUrl = encodeURIComponent(targetUrl);
-            return `${CORS_PROXY}i=${encodedUrl}`;
+        // 构建代理 URL（使用不同的 CORS 代理方案）
+        function getProxiedUrl(url) {
+            // 使用另一种代理格式，可能更稳定
+            return `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
         }
 
-        // 生成图片函数（同步，简化版）
+        // 生成图片函数（优化版）
         async function generateImage(prompt) {
             loading.style.display = 'block';
             generatedImage.style.display = 'none';
-            status.textContent = 'API 接口调用中...';
+            status.textContent = `正在生成 "${prompt}" 的图片...`;
+            status.className = '';
+
             try {
-                const path = '/images/generations';
-                const proxyUrl = getProxiedUrl(path);
+                // 构建完整的 API URL
+                const fullUrl = `${BASE_API_URL}/images/generations`;
+                
+                // 准备请求参数
+                const requestData = {
+                    model: 'doubao-seedream-4.0-t2i',
+                    prompt: prompt,
+                    n: 1,
+                    size: '1024x1024',
+                    response_format: 'url'
+                };
+
+                // 使用代理发送请求（处理 CORS）
+                const proxyUrl = getProxiedUrl(fullUrl);
                 const response = await fetch(proxyUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${API_KEY}` // 测试若被代理过滤，用后端
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Authorization': `Bearer ${API_KEY}`
                     },
                     body: JSON.stringify({
-                        model: 'doubao-seedream-4.0-t2i', // 或 'seedream-4.0-t2i-250828'
-                        prompt: prompt, // 直接用语音文本（中文友好）
-                        n: 1, // 生成1张
-                        size: '1024x1024', // 支持 512x512, 1024x1024 等
-                        response_format: 'url' // 返回 URL
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${API_KEY}`
+                        },
+                        body: JSON.stringify(requestData)
                     })
                 });
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
+
+                // 处理代理响应
                 const data = await response.json();
-                if (data.data && data.data[0].url) {
-                    generatedImage.src = data.data[0].url;
-                    generatedImage.style.display = 'block';
-                    status.textContent = `生成成功：${prompt}`;
+                
+                // 解析代理返回的原始响应
+                if (data && data.contents) {
+                    const apiResponse = JSON.parse(data.contents);
+                    
+                    if (apiResponse.data && apiResponse.data[0] && apiResponse.data[0].url) {
+                        generatedImage.src = apiResponse.data[0].url;
+                        generatedImage.style.display = 'block';
+                        status.textContent = `生成成功：${prompt}`;
+                        status.className = 'success';
+                    } else {
+                        throw new Error('API 返回格式不正确: ' + JSON.stringify(apiResponse));
+                    }
                 } else {
-                    throw new Error('无图片 URL: ' + JSON.stringify(data));
+                    throw new Error('代理服务返回异常: ' + JSON.stringify(data));
                 }
             } catch (error) {
-                console.error('API Error:', error);
-                status.textContent = `生成失败：${error.message}. 检查 Key/代理 或网络。`;
+                console.error('生成图片错误:', error);
+                status.textContent = `生成失败: ${error.message}。请检查API密钥和网络。`;
+                status.className = 'error';
             } finally {
                 loading.style.display = 'none';
             }
         }
 
+        // 按钮点击事件
         toggleBtn.addEventListener('click', () => {
             if (!isListening) {
-                recognition.start();
-                toggleBtn.textContent = '停止监听';
-                toggleBtn.classList.add('stop-btn');
-                isListening = true;
-                status.textContent = '正在监听，说“小熊”或其他词语试试！';
+                try {
+                    recognition.start();
+                    toggleBtn.textContent = '停止监听';
+                    toggleBtn.classList.add('stop-btn');
+                    isListening = true;
+                    status.textContent = '正在监听，说点什么吧...';
+                    status.className = '';
+                } catch (err) {
+                    status.textContent = '无法启动监听: ' + err.message;
+                    status.className = 'error';
+                }
             } else {
                 recognition.stop();
                 toggleBtn.textContent = '开始监听';
                 toggleBtn.classList.remove('stop-btn');
                 isListening = false;
                 status.textContent = '监听已停止。';
-                generatedImage.style.display = 'none';
+                status.className = '';
             }
         });
 
+        // 语音识别结果处理
         recognition.onresult = async (event) => {
-            const transcript = event.results[event.results.length - 1][0].transcript;
-            status.textContent = `你说了：${transcript}`;
-            if (transcript.trim()) {
+            const transcript = event.results[event.results.length - 1][0].transcript.trim();
+            if (transcript) {
+                status.textContent = `识别到: ${transcript}`;
                 await generateImage(transcript);
             }
         };
 
+        // 语音识别错误处理
         recognition.onerror = (event) => {
-            status.textContent = '语音识别出错：' + event.error;
+            console.error('语音识别错误:', event.error);
+            status.textContent = `语音识别出错: ${event.error}`;
+            status.className = 'error';
+            
+            // 出错时自动停止监听
             if (isListening) {
-                toggleBtn.textContent = '开始监听';
-                toggleBtn.classList.remove('stop-btn');
-                isListening = false;
+                toggleBtn.click();
             }
         };
 
+        // 语音识别结束处理
         recognition.onend = () => {
             if (isListening) {
+                // 如果需要持续监听，这里可以重新启动
+                status.textContent = '监听已中断，点击按钮重新开始。';
                 toggleBtn.textContent = '开始监听';
                 toggleBtn.classList.remove('stop-btn');
                 isListening = false;
-                status.textContent = '监听结束。点击按钮重新开始。';
             }
         };
     </script>
