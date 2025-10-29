@@ -3,22 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>选择你的动物头像</title>
+  <title>选择你的动物头像组合</title>
   <style>
     :root{
       --sky-blue:#87ceeb;
       --grass-green:#90ee90;
       --white:#ffffff;
+      --highlight:#ff6b6b;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body{
       font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: linear-gradient(180deg, var(--sky-blue) 0%, var(--sky-blue) 60%, var(--grass-green) 60%, var(--grass-green) 100%);
-      height:100vh;
+      min-height:100vh;
+      padding:20px 0;
       display:flex;
       align-items:center;
       justify-content:center;
-      overflow:hidden;
+      overflow:auto;
     }
 
     /* 白云装饰 */
@@ -79,12 +81,6 @@
       height: 140px;
       position: relative;
     }
-    /* 三角形槽位内的图片也应用三角形裁剪 */
-    .avatar-slot[data-slot="2"] img {
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-      width: 95%;
-      height: 95%;
-    }
     /* 三角形槽位的文字调整 */
     .avatar-slot[data-slot="2"].empty {
       font-size: 12px;
@@ -97,7 +93,7 @@
     }
     .avatar-slot:active{ transform: scale(0.96); }
     .avatar-slot.selected{
-      border-color:#ff6b6b;
+      border-color:var(--highlight);
     }
     .avatar-slot img{
       width:90%;
@@ -144,21 +140,82 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      cursor:pointer;
-      transition: transform .2s ease, box-shadow .2s ease;
+      cursor:grab;
+      transition: transform .2s ease, box-shadow .2s ease, border .2s ease;
       padding:6px;
       width:90px;
       height:90px;
+      user-select: none;
+      border:2px solid transparent;
+    }
+    .thumb.set2 {
+      border-radius: 0;
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+    .thumb.set2 img {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+    .thumb:active{ 
+      transform: scale(.92); 
+      cursor:grabbing;
+    }
+    .thumb:hover{ 
+      transform: translateY(-6px); 
+      box-shadow:0 8px 20px rgba(0,0,0,0.18); 
+    }
+    .thumb.dragging {
+      opacity: 0.7;
+      transform: scale(0.95);
+    }
+    .thumb.drag-over {
+      border-color: var(--highlight);
+      box-shadow:0 0 0 2px rgba(255, 107, 107, 0.3);
     }
     .thumb img{
       width:100%;
       height:100%;
       object-fit:contain;
     }
-    .thumb:active{ transform: scale(.92); }
-    .thumb:hover{ 
-      transform: translateY(-6px); 
-      box-shadow:0 8px 20px rgba(0,0,0,0.18); 
+
+    /* 组合结果区域 */
+    .combination-result {
+      text-align: center;
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 8px;
+      display: none;
+    }
+    .combination-result.visible {
+      display: block;
+    }
+    .combination-title {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .combination-images {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .combination-image {
+      width: 80px;
+      height: 80px;
+    }
+    .combination-image.set1 {
+      border-radius: 50%;
+    }
+    .combination-image.set2 {
+      border-radius: 0;
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+    .combination-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .combination-image.set2 img {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
     }
 
     /* 小屏适配 */
@@ -207,22 +264,22 @@
 
       <div class="right" data-panel="1">
         <div class="thumb-grid">
-          <div class="thumb" data-src="thumb1.png">
+          <div class="thumb" draggable="true" data-src="thumb1.png" data-set="1">
             <img src="thumb1.png" alt="头像1">
           </div>
-          <div class="thumb" data-src="thumb2.png">
+          <div class="thumb" draggable="true" data-src="thumb2.png" data-set="1">
             <img src="thumb2.png" alt="头像2">
           </div>
-          <div class="thumb" data-src="thumb3.png">
+          <div class="thumb" draggable="true" data-src="thumb3.png" data-set="1">
             <img src="thumb3.png" alt="头像3">
           </div>
-          <div class="thumb" data-src="thumb4.jpg">
+          <div class="thumb" draggable="true" data-src="thumb4.jpg" data-set="1">
             <img src="thumb4.jpg" alt="头像4">
           </div>
-          <div class="thumb" data-src="thumb5.png">
+          <div class="thumb" draggable="true" data-src="thumb5.png" data-set="1">
             <img src="thumb5.png" alt="头像5">
           </div>
-          <div class="thumb" data-src="thumb6.png">
+          <div class="thumb" draggable="true" data-src="thumb6.png" data-set="1">
             <img src="thumb6.png" alt="头像6">
           </div>
         </div>
@@ -239,77 +296,208 @@
 
       <div class="right" data-panel="2">
         <div class="thumb-grid">
-          <div class="thumb" data-src="1.jpg">
+          <div class="thumb set2" draggable="true" data-src="1.jpg" data-set="2">
             <img src="1.jpg" alt="头像1">
           </div>
-          <div class="thumb" data-src="2.jpg">
+          <div class="thumb set2" draggable="true" data-src="2.jpg" data-set="2">
             <img src="2.jpg" alt="头像2">
           </div>
-          <div class="thumb" data-src="3.jpg">
+          <div class="thumb set2" draggable="true" data-src="3.jpg" data-set="2">
             <img src="3.jpg" alt="头像3">
           </div>
-          <div class="thumb" data-src="4.jpg">
+          <div class="thumb set2" draggable="true" data-src="4.jpg" data-set="2">
             <img src="4.jpg" alt="头像4">
           </div>
-          <div class="thumb" data-src="5.jpg">
+          <div class="thumb set2" draggable="true" data-src="5.jpg" data-set="2">
             <img src="5.jpg" alt="头像5">
           </div>
-          <div class="thumb" data-src="6.jpg">
+          <div class="thumb set2" draggable="true" data-src="6.jpg" data-set="2">
             <img src="6.jpg" alt="头像6">
           </div>
-          <div class="thumb" data-src="7.jpg">
+          <div class="thumb set2" draggable="true" data-src="7.jpg" data-set="2">
             <img src="7.jpg" alt="头像7">
           </div>
-          <div class="thumb" data-src="8.png">
+          <div class="thumb set2" draggable="true" data-src="8.png" data-set="2">
             <img src="8.png" alt="头像8">
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 组合结果显示 -->
+    <div class="combination-result" id="combinationResult">
+      <h3 class="combination-title">你的组合</h3>
+      <div class="combination-images">
+        <div class="combination-image set1" id="comboImage1"></div>
+        <div class="combination-image set2" id="comboImage2"></div>
+      </div>
+    </div>
   </div>
 
   <script>
+    // 存储选中的图片
+    let selectedFromSet1 = null;
+    let selectedFromSet2 = null;
+
+    // 保存原始的缩略图
+    const originalThumbs = {
+      1: Array.from(document.querySelectorAll('[data-set="1"]')),
+      2: Array.from(document.querySelectorAll('[data-set="2"]'))
+    };
+
     // 获取所有的头像槽位和面板
     const avatarSlots = document.querySelectorAll('.avatar-slot');
     const rightPanels = document.querySelectorAll('.right');
+    const combinationResult = document.getElementById('combinationResult');
+    const comboImage1 = document.getElementById('comboImage1');
+    const comboImage2 = document.getElementById('comboImage2');
 
-    // 为每个头像槽位添加点击事件
+    // 为每个头像槽位添加点击事件 - 用于显示/隐藏选择面板
     avatarSlots.forEach(slot => {
       slot.addEventListener('click', () => {
         const slotNum = slot.dataset.slot;
         const panel = document.querySelector(`.right[data-panel="${slotNum}"]`);
+        
+        // 只切换当前面板的显示状态，不影响其他面板
         panel.classList.toggle('show');
       });
     });
 
-    // 为每个缩略图添加点击事件
-    document.querySelectorAll('.thumb-grid').forEach(grid => {
-      grid.addEventListener('click', (e) => {
-        const thumb = e.target.closest('.thumb');
-        if (!thumb) return;
+    // 拖拽功能实现
+    let draggedItem = null;
 
-        const imgSrc = thumb.dataset.src;
-        const panel = e.target.closest('.right');
-        const panelNum = panel.dataset.panel;
-        const slot = document.querySelector(`.avatar-slot[data-slot="${panelNum}"]`);
+    // 初始化拖拽事件
+    function initDragEvents() {
+      // 为所有缩略图添加拖拽事件
+      document.querySelectorAll('.thumb').forEach(thumb => {
+        // 只有第一组的图片可以被拖拽
+        if (thumb.dataset.set === "1") {
+          // 拖拽开始
+          thumb.addEventListener('dragstart', (e) => {
+            draggedItem = thumb;
+            // 存储拖拽的数据
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+              src: thumb.dataset.src,
+              set: thumb.dataset.set
+            }));
+            // 添加拖拽样式
+            setTimeout(() => thumb.classList.add('dragging'), 0);
+          });
 
-        // 更新对应的头像槽位
-        slot.innerHTML = `<img src="${imgSrc}" alt="选中的头像">`;
-        slot.classList.remove('empty');
-        slot.classList.add('selected');
+          // 拖拽结束
+          thumb.addEventListener('dragend', () => {
+            draggedItem = null;
+            // 移除拖拽样式
+            thumb.classList.remove('dragging');
+            
+            // 移除所有拖放目标的高亮样式
+            document.querySelectorAll('.thumb.set2').forEach(t => {
+              t.classList.remove('drag-over');
+            });
+          });
+        } else {
+          // 第二组的图片作为拖放目标
+          // 允许拖放
+          thumb.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            thumb.classList.add('drag-over'); // 拖放时高亮
+          });
 
-        // 关闭面板
-        panel.classList.remove('show');
+          // 离开拖放区域
+          thumb.addEventListener('dragleave', () => {
+            thumb.classList.remove('drag-over'); // 移除高亮
+          });
 
-        // 动画效果
-        slot.style.transform = 'scale(1.15)';
-        setTimeout(() => {
-          slot.style.transform = 'scale(1)';
-        }, 200);
-
-        console.log(`槽位${panelNum}选择了头像:`, imgSrc);
+          // 执行放置
+          thumb.addEventListener('drop', (e) => {
+            e.preventDefault();
+            thumb.classList.remove('drag-over'); // 移除高亮
+            
+            // 获取拖拽的数据
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            
+            // 检查是否是从第一组拖过来的图片
+            if (data.set === "1") {
+              // 记录选中的图片
+              selectedFromSet1 = data.src;
+              selectedFromSet2 = thumb.dataset.src;
+              
+              // 更新组合结果显示
+              updateCombinationResult();
+              
+              // 更新右侧面板显示
+              updatePanels();
+            }
+          });
+        }
       });
-    });
+    }
+
+    // 更新组合结果显示
+    function updateCombinationResult() {
+      if (selectedFromSet1 && selectedFromSet2) {
+        comboImage1.innerHTML = `<img src="${selectedFromSet1}" alt="选中的头像">`;
+        comboImage2.innerHTML = `<img src="${selectedFromSet2}" alt="选中的头像">`;
+        combinationResult.classList.add('visible');
+      }
+    }
+
+    // 更新面板显示 - 只显示选中的图片
+    function updatePanels() {
+      // 更新第一组面板
+      const panel1 = document.querySelector(`.right[data-panel="1"]`);
+      const grid1 = panel1.querySelector('.thumb-grid');
+      const wasVisible1 = panel1.classList.contains('show');
+      
+      grid1.innerHTML = '';
+      if (selectedFromSet1) {
+        // 只显示选中的第一组图片
+        const selectedThumb = originalThumbs[1].find(thumb => 
+          thumb.dataset.src === selectedFromSet1
+        );
+        if (selectedThumb) {
+          const clone = selectedThumb.cloneNode(true);
+          grid1.appendChild(clone);
+        }
+      } else {
+        // 显示所有第一组图片
+        originalThumbs[1].forEach(thumb => {
+          const clone = thumb.cloneNode(true);
+          grid1.appendChild(clone);
+        });
+      }
+      if (wasVisible1) panel1.classList.add('show');
+      
+      // 更新第二组面板
+      const panel2 = document.querySelector(`.right[data-panel="2"]`);
+      const grid2 = panel2.querySelector('.thumb-grid');
+      const wasVisible2 = panel2.classList.contains('show');
+      
+      grid2.innerHTML = '';
+      if (selectedFromSet2) {
+        // 只显示选中的第二组图片
+        const selectedThumb = originalThumbs[2].find(thumb => 
+          thumb.dataset.src === selectedFromSet2
+        );
+        if (selectedThumb) {
+          const clone = selectedThumb.cloneNode(true);
+          grid2.appendChild(clone);
+        }
+      } else {
+        // 显示所有第二组图片
+        originalThumbs[2].forEach(thumb => {
+          const clone = thumb.cloneNode(true);
+          grid2.appendChild(clone);
+        });
+      }
+      if (wasVisible2) panel2.classList.add('show');
+      
+      // 重新初始化拖拽事件
+      initDragEvents();
+    }
+
+    // 初始化
+    initDragEvents();
   </script>
 </body>
 </html>
