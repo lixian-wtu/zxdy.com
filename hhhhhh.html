@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>选择你的动物头像</title>
+  <style>
+    :root{
+      --sky-blue:#87ceeb;
+      --grass-green:#90ee90;
+      --white:#ffffff;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body{
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(180deg, var(--sky-blue) 0%, var(--sky-blue) 60%, var(--grass-green) 60%, var(--grass-green) 100%);
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+
+    /* 白云装饰 */
+    .cloud {
+      position:absolute;
+      background:white;
+      border-radius:100px;
+      opacity:0.8;
+    }
+    .cloud1{ width:120px; height:50px; top:8%; left:10%; }
+    .cloud2{ width:90px; height:40px; top:15%; right:15%; }
+    .cloud3{ width:100px; height:45px; bottom:65%; left:50%; }
+
+    .container{
+      width:95%;
+      max-width:1200px;
+      position:relative;
+      z-index:10;
+      display:flex;
+      flex-direction:column;
+      gap:40px;
+    }
+
+    /* 每一行的容器 */
+    .row {
+      width:100%;
+      height:auto;
+      display:flex;
+      gap:20px;
+      align-items:center;
+    }
+
+    /* 左侧区域 */
+    .left {
+      flex-shrink:0;
+    }
+    .avatar-slot{
+      width:120px;
+      height:120px;
+      background:white;
+      border-radius:50%; /* 默认圆形 */
+      border:4px solid #333;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition:transform 0.2s, box-shadow 0.2s;
+      box-shadow:0 6px 15px rgba(0,0,0,0.15);
+      user-select:none;
+    }
+    /* 第二行的头像槽位改为三角形 */
+    .avatar-slot[data-slot="2"] {
+      border-radius: 0;
+      /* 使用 clip-path 创建三角形（尖端向上） */
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+      /* 调整三角形尺寸和位置 */
+      width: 140px;
+      height: 140px;
+      position: relative;
+    }
+    /* 三角形槽位内的图片也应用三角形裁剪 */
+    .avatar-slot[data-slot="2"] img {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+      width: 95%;
+      height: 95%;
+    }
+    /* 三角形槽位的文字调整 */
+    .avatar-slot[data-slot="2"].empty {
+      font-size: 12px;
+      padding-top: 30px;
+      line-height: 1.4;
+    }
+    .avatar-slot:hover{ 
+      transform:scale(1.08);
+      box-shadow:0 8px 20px rgba(0,0,0,0.2);
+    }
+    .avatar-slot:active{ transform: scale(0.96); }
+    .avatar-slot.selected{
+      border-color:#ff6b6b;
+    }
+    .avatar-slot img{
+      width:90%;
+      height:90%;
+      object-fit:contain;
+      border-radius: 0;
+    }
+    .avatar-slot.empty{
+      font-size:13px;
+      color:#666;
+      text-align:center;
+      font-weight:600;
+    }
+
+    /* 右侧：图片选择面板，默认隐藏 */
+    .right {
+      flex:1;
+      display:flex;
+      gap:12px;
+      transform: translateX(30px);
+      transition: transform .35s ease, opacity .35s ease;
+      opacity:0;
+      pointer-events:none;
+      align-items:center;
+    }
+    .right.show {
+      transform: translateX(0);
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    /* 缩略图网格 */
+    .thumb-grid{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .thumb{
+      background: #fff;
+      border-radius:50%;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: transform .2s ease, box-shadow .2s ease;
+      padding:6px;
+      width:90px;
+      height:90px;
+    }
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+    }
+    .thumb:active{ transform: scale(.92); }
+    .thumb:hover{ 
+      transform: translateY(-6px); 
+      box-shadow:0 8px 20px rgba(0,0,0,0.18); 
+    }
+
+    /* 小屏适配 */
+    @media(max-width:900px){
+      .container{ 
+        gap:30px;
+      }
+      .row{
+        flex-wrap:wrap;
+        justify-content:center;
+      }
+      .left{
+        width:100%;
+        display:flex;
+        justify-content:center;
+      }
+      .right{ 
+        width:100%;
+        justify-content:center;
+        transform:translateY(20px);
+      }
+      .right.show{
+        transform:translateY(0);
+      }
+      .thumb{
+        width:80px;
+        height:80px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 装饰云朵 -->
+  <div class="cloud cloud1"></div>
+  <div class="cloud cloud2"></div>
+  <div class="cloud cloud3"></div>
+
+  <div class="container">
+    <!-- 第一行 -->
+    <div class="row">
+      <div class="left">
+        <div class="avatar-slot empty" data-slot="1">
+          点我<br>选择
+        </div>
+      </div>
+
+      <div class="right" data-panel="1">
+        <div class="thumb-grid">
+          <div class="thumb" data-src="thumb1.png">
+            <img src="thumb1.png" alt="头像1">
+          </div>
+          <div class="thumb" data-src="thumb2.png">
+            <img src="thumb2.png" alt="头像2">
+          </div>
+          <div class="thumb" data-src="thumb3.png">
+            <img src="thumb3.png" alt="头像3">
+          </div>
+          <div class="thumb" data-src="thumb4.jpg">
+            <img src="thumb4.jpg" alt="头像4">
+          </div>
+          <div class="thumb" data-src="thumb5.png">
+            <img src="thumb5.png" alt="头像5">
+          </div>
+          <div class="thumb" data-src="thumb6.png">
+            <img src="thumb6.png" alt="头像6">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 第二行 -->
+    <div class="row">
+      <div class="left">
+        <div class="avatar-slot empty" data-slot="2">
+          点我<br>选择
+        </div>
+      </div>
+
+      <div class="right" data-panel="2">
+        <div class="thumb-grid">
+          <div class="thumb" data-src="1.jpg">
+            <img src="1.jpg" alt="头像1">
+          </div>
+          <div class="thumb" data-src="2.jpg">
+            <img src="2.jpg" alt="头像2">
+          </div>
+          <div class="thumb" data-src="3.jpg">
+            <img src="3.jpg" alt="头像3">
+          </div>
+          <div class="thumb" data-src="4.jpg">
+            <img src="4.jpg" alt="头像4">
+          </div>
+          <div class="thumb" data-src="5.jpg">
+            <img src="5.jpg" alt="头像5">
+          </div>
+          <div class="thumb" data-src="6.jpg">
+            <img src="6.jpg" alt="头像6">
+          </div>
+          <div class="thumb" data-src="7.jpg">
+            <img src="7.jpg" alt="头像7">
+          </div>
+          <div class="thumb" data-src="8.png">
+            <img src="8.png" alt="头像8">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 获取所有的头像槽位和面板
+    const avatarSlots = document.querySelectorAll('.avatar-slot');
+    const rightPanels = document.querySelectorAll('.right');
+
+    // 为每个头像槽位添加点击事件
+    avatarSlots.forEach(slot => {
+      slot.addEventListener('click', () => {
+        const slotNum = slot.dataset.slot;
+        const panel = document.querySelector(`.right[data-panel="${slotNum}"]`);
+        panel.classList.toggle('show');
+      });
+    });
+
+    // 为每个缩略图添加点击事件
+    document.querySelectorAll('.thumb-grid').forEach(grid => {
+      grid.addEventListener('click', (e) => {
+        const thumb = e.target.closest('.thumb');
+        if (!thumb) return;
+
+        const imgSrc = thumb.dataset.src;
+        const panel = e.target.closest('.right');
+        const panelNum = panel.dataset.panel;
+        const slot = document.querySelector(`.avatar-slot[data-slot="${panelNum}"]`);
+
+        // 更新对应的头像槽位
+        slot.innerHTML = `<img src="${imgSrc}" alt="选中的头像">`;
+        slot.classList.remove('empty');
+        slot.classList.add('selected');
+
+        // 关闭面板
+        panel.classList.remove('show');
+
+        // 动画效果
+        slot.style.transform = 'scale(1.15)';
+        setTimeout(() => {
+          slot.style.transform = 'scale(1)';
+        }, 200);
+
+        console.log(`槽位${panelNum}选择了头像:`, imgSrc);
+      });
+    });
+  </script>
+</body>
+</html>
