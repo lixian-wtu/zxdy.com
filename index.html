@@ -10,6 +10,7 @@
       --grass-green:#90ee90;
       --white:#ffffff;
       --highlight:#ff6b6b;
+      --cancel:#6c757d;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body{
@@ -42,6 +43,28 @@
       display:flex;
       flex-direction:column;
       gap:40px;
+    }
+
+    /* 控制按钮 */
+    .controls {
+      text-align: center;
+    }
+    .cancel-btn {
+      background-color: var(--cancel);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+      display: none;
+    }
+    .cancel-btn.visible {
+      display: inline-block;
+    }
+    .cancel-btn:hover {
+      background-color: #5a6268;
     }
 
     /* 每一行的容器 */
@@ -254,6 +277,11 @@
   <div class="cloud cloud3"></div>
 
   <div class="container">
+    <!-- 控制按钮 -->
+    <div class="controls">
+      <button class="cancel-btn" id="cancelBtn">取消选择</button>
+    </div>
+
     <!-- 第一行 -->
     <div class="row">
       <div class="left">
@@ -345,12 +373,13 @@
       2: Array.from(document.querySelectorAll('[data-set="2"]'))
     };
 
-    // 获取所有的头像槽位和面板
+    // 获取DOM元素
     const avatarSlots = document.querySelectorAll('.avatar-slot');
     const rightPanels = document.querySelectorAll('.right');
     const combinationResult = document.getElementById('combinationResult');
     const comboImage1 = document.getElementById('comboImage1');
     const comboImage2 = document.getElementById('comboImage2');
+    const cancelBtn = document.getElementById('cancelBtn');
 
     // 为每个头像槽位添加点击事件 - 用于显示/隐藏选择面板
     avatarSlots.forEach(slot => {
@@ -362,6 +391,25 @@
         panel.classList.toggle('show');
       });
     });
+
+    // 取消按钮点击事件
+    cancelBtn.addEventListener('click', resetToInitialState);
+
+    // 重置到初始状态
+    function resetToInitialState() {
+      // 清除选中状态
+      selectedFromSet1 = null;
+      selectedFromSet2 = null;
+      
+      // 隐藏组合结果
+      combinationResult.classList.remove('visible');
+      
+      // 隐藏取消按钮
+      cancelBtn.classList.remove('visible');
+      
+      // 更新面板显示所有图片
+      updatePanels();
+    }
 
     // 拖拽功能实现
     let draggedItem = null;
@@ -422,6 +470,9 @@
               selectedFromSet1 = data.src;
               selectedFromSet2 = thumb.dataset.src;
               
+              // 显示取消按钮
+              cancelBtn.classList.add('visible');
+              
               // 更新组合结果显示
               updateCombinationResult();
               
@@ -442,7 +493,7 @@
       }
     }
 
-    // 更新面板显示 - 只显示选中的图片
+    // 更新面板显示
     function updatePanels() {
       // 更新第一组面板
       const panel1 = document.querySelector(`.right[data-panel="1"]`);
