@@ -17,23 +17,23 @@
       font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: linear-gradient(180deg, var(--sky-blue) 0%, var(--sky-blue) 60%, var(--grass-green) 60%, var(--grass-green) 100%);
       min-height:100vh;
-      padding:20px 0;
+      padding:5px 0 60px; /* 进一步减少顶部内边距，增加底部内边距 */
       display:flex;
       align-items:center;
       justify-content:center;
       overflow:auto;
     }
 
-    /* 白云装饰 */
+    /* 白云装饰 - 再次调整位置 */
     .cloud {
       position:absolute;
       background:white;
       border-radius:100px;
       opacity:0.8;
     }
-    .cloud1{ width:120px; height:50px; top:8%; left:10%; }
-    .cloud2{ width:90px; height:40px; top:15%; right:15%; }
-    .cloud3{ width:100px; height:45px; bottom:65%; left:50%; }
+    .cloud1{ width:120px; height:50px; top:15%; left:10%; }
+    .cloud2{ width:90px; height:40px; top:22%; right:15%; }
+    .cloud3{ width:100px; height:45px; bottom:72%; left:50%; }
 
     .container{
       width:95%;
@@ -42,12 +42,20 @@
       z-index:10;
       display:flex;
       flex-direction:column;
-      gap:40px;
+      gap:120px; /* 进一步增大行间距 */
     }
 
-    /* 控制按钮 */
+    /* 第一行大幅上移 - 核心调整 */
+    .row:first-of-type {
+      margin-top: -120px; /* 上移距离增加到-120px */
+    }
+
+    /* 控制按钮 - 同步上移 */
     .controls {
       text-align: center;
+      margin-bottom: -80px; /* 控制按钮进一步上移 */
+      position: relative;
+      z-index: 20;
     }
     .cancel-btn {
       background-color: var(--cancel);
@@ -200,10 +208,10 @@
       object-fit:contain;
     }
 
-    /* 组合结果区域 */
+    /* 组合结果区域 - 调整位置 */
     .combination-result {
       text-align: center;
-      margin-top: 20px;
+      margin-top: -40px; /* 结果区域进一步上移 */
       padding: 15px;
       background: rgba(255, 255, 255, 0.7);
       border-radius: 8px;
@@ -241,10 +249,16 @@
       clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
     }
 
-    /* 小屏适配 */
+    /* 小屏适配 - 限制上移距离避免溢出 */
     @media(max-width:900px){
       .container{ 
-        gap:30px;
+        gap:100px;
+      }
+      .row:first-of-type {
+        margin-top: -80px; /* 小屏幕上移距离适度减少 */
+      }
+      .controls {
+        margin-bottom: -60px;
       }
       .row{
         flex-wrap:wrap;
