@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>选择你的动物头像组合</title>
+  <title>动态三行拖拽组合</title>
   <style>
     :root{
       --sky-blue:#87ceeb;
       --grass-green:#90ee90;
-      --white:#ffffff;
       --highlight:#ff6b6b;
       --cancel:#6c757d;
     }
@@ -17,23 +16,21 @@
       font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: linear-gradient(180deg, var(--sky-blue) 0%, var(--sky-blue) 60%, var(--grass-green) 60%, var(--grass-green) 100%);
       min-height:100vh;
-      padding:5px 0 60px; /* 进一步减少顶部内边距，增加底部内边距 */
+      padding:20px 20px 50px; 
       display:flex;
-      align-items:center;
       justify-content:center;
       overflow:auto;
     }
 
-    /* 白云装饰 - 再次调整位置 */
     .cloud {
       position:absolute;
       background:white;
       border-radius:100px;
       opacity:0.8;
     }
-    .cloud1{ width:120px; height:50px; top:15%; left:10%; }
-    .cloud2{ width:90px; height:40px; top:22%; right:15%; }
-    .cloud3{ width:100px; height:45px; bottom:72%; left:50%; }
+    .cloud1{ width:120px; height:50px; top:10%; left:10%; } 
+    .cloud2{ width:90px; height:40px; top:18%; right:15%; } 
+    .cloud3{ width:100px; height:45px; top:25%; left:50%; } 
 
     .container{
       width:95%;
@@ -42,113 +39,110 @@
       z-index:10;
       display:flex;
       flex-direction:column;
-      gap:120px; /* 进一步增大行间距 */
+      gap:30px; 
+      margin-top: -10px; 
     }
 
-    /* 第一行大幅上移 - 核心调整 */
-    .row:first-of-type {
-      margin-top: -120px; /* 上移距离增加到-120px */
-    }
-
-    /* 控制按钮 - 同步上移 */
     .controls {
       text-align: center;
-      margin-bottom: -80px; /* 控制按钮进一步上移 */
-      position: relative;
+      margin-bottom: 10px; 
       z-index: 20;
     }
-    .cancel-btn {
-      background-color: var(--cancel);
+    .reset-btn {
+      background: var(--cancel);
       color: white;
       border: none;
       padding: 8px 16px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 14px;
-      transition: background-color 0.2s;
       display: none;
     }
-    .cancel-btn.visible {
-      display: inline-block;
-    }
-    .cancel-btn:hover {
-      background-color: #5a6268;
-    }
+    .reset-btn.visible { display: inline-block; }
+    .reset-btn:hover { background: #5a6268; }
 
-    /* 每一行的容器 */
     .row {
-      width:100%;
-      height:auto;
       display:flex;
       gap:20px;
       align-items:center;
+      position: relative;
+    }
+    #row1 {
+      margin-top: -5px;
     }
 
-    /* 左侧区域 */
-    .left {
-      flex-shrink:0;
+    .plus-btn {
+      width: 60px;
+      height: 60px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: var(--highlight);
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      z-index: 15;
+      transition: all 0.3s ease;
+
+        margin-left: 0;         /* 保证贴左 */
+  align-self: flex-start; /* 保证在容器左边 */
     }
-    .avatar-slot{
+    .plus-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    }
+
+    .category-btn {
       width:120px;
       height:120px;
       background:white;
-      border-radius:50%; /* 默认圆形 */
+      border-radius:50%;
       border:4px solid #333;
       display:flex;
       align-items:center;
       justify-content:center;
       cursor:pointer;
-      transition:transform 0.2s, box-shadow 0.2s;
       box-shadow:0 6px 15px rgba(0,0,0,0.15);
+      font-size:16px;
+      color:#333;
+      font-weight:600;
+      padding:10px;
+      text-align:center;
       user-select:none;
+      transition: all 0.2s;
     }
-    /* 第二行的头像槽位改为三角形 */
-    .avatar-slot[data-slot="2"] {
+    .category-btn[data-category="2"] {
       border-radius: 0;
-      /* 使用 clip-path 创建三角形（尖端向上） */
       clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-      /* 调整三角形尺寸和位置 */
       width: 140px;
       height: 140px;
-      position: relative;
     }
-    /* 三角形槽位的文字调整 */
-    .avatar-slot[data-slot="2"].empty {
-      font-size: 12px;
-      padding-top: 30px;
-      line-height: 1.4;
+    .category-btn[data-category="3"] {
+      border-radius: 0;
+      width: 130px;
+      height: 130px;
     }
-    .avatar-slot:hover{ 
+    .category-btn:hover { 
       transform:scale(1.08);
       box-shadow:0 8px 20px rgba(0,0,0,0.2);
-    }
-    .avatar-slot:active{ transform: scale(0.96); }
-    .avatar-slot.selected{
       border-color:var(--highlight);
     }
-    .avatar-slot img{
-      width:90%;
-      height:90%;
-      object-fit:contain;
-      border-radius: 0;
-    }
-    .avatar-slot.empty{
-      font-size:13px;
-      color:#666;
-      text-align:center;
-      font-weight:600;
+    .category-btn.active {
+      border-color:var(--highlight);
+      background: rgba(255, 107, 107, 0.1);
     }
 
-    /* 右侧：图片选择面板，默认隐藏 */
     .right {
       flex:1;
       display:flex;
       gap:12px;
       transform: translateX(30px);
-      transition: transform .35s ease, opacity .35s ease;
       opacity:0;
       pointer-events:none;
-      align-items:center;
+      transition: all .35s ease;
     }
     .right.show {
       transform: translateX(0);
@@ -156,413 +150,321 @@
       pointer-events:auto;
     }
 
-    /* 缩略图网格 */
-    .thumb-grid{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
+    .thumb-grid{ display:flex; gap:12px; flex-wrap:wrap; }
     .thumb{
-      background: #fff;
+      width:90px; height:90px;
+      background:#fff;
       border-radius:50%;
       box-shadow:0 4px 12px rgba(0,0,0,0.1);
       overflow:hidden;
-      display:flex;
-      align-items:center;
-      justify-content:center;
       cursor:grab;
-      transition: transform .2s ease, box-shadow .2s ease, border .2s ease;
       padding:6px;
-      width:90px;
-      height:90px;
-      user-select: none;
       border:2px solid transparent;
+      transition: all .2s;
     }
-    .thumb.set2 {
-      border-radius: 0;
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-    }
-    .thumb.set2 img {
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-    }
-    .thumb:active{ 
-      transform: scale(.92); 
-      cursor:grabbing;
-    }
-    .thumb:hover{ 
-      transform: translateY(-6px); 
-      box-shadow:0 8px 20px rgba(0,0,0,0.18); 
-    }
-    .thumb.dragging {
-      opacity: 0.7;
-      transform: scale(0.95);
-    }
-    .thumb.drag-over {
-      border-color: var(--highlight);
-      box-shadow:0 0 0 2px rgba(255, 107, 107, 0.3);
-    }
-    .thumb img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-    }
+    .thumb.category2 { border-radius:0; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+    .thumb.category3 { border-radius:0; }
+    .thumb.category2 img, .thumb.category3 img { clip-path: inherit; }
+    .thumb:hover { transform: translateY(-6px); box-shadow:0 8px 20px rgba(0,0,0,0.18); border-color:var(--highlight); }
+    .thumb.dragging { opacity:0.7; transform:scale(0.95); cursor:grabbing; }
+    .thumb img { width:100%; height:100%; object-fit:contain; }
 
-    /* 组合结果区域 - 调整位置 */
-    .combination-result {
-      text-align: center;
-      margin-top: -40px; /* 结果区域进一步上移 */
-      padding: 15px;
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 8px;
-      display: none;
-    }
-    .combination-result.visible {
-      display: block;
-    }
-    .combination-title {
-      color: #333;
-      margin-bottom: 10px;
-    }
-    .combination-images {
+    /* 组合框 */
+    .combo-track {
+      width: 100%;
+      max-width: 900px;
+      height: 140px;
+      background: var(--grass-green);
+      border-radius: 20px;
+      margin: 30px auto 0; 
       display: flex;
       justify-content: center;
-      gap: 20px;
+      align-items: center;
+      gap: 40px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      position: relative;
+      z-index: 10;
+      transition: gap 0.3s ease;
     }
-    .combination-image {
-      width: 80px;
-      height: 80px;
+    .combo-track.three {
+      gap: 30px;
     }
-    .combination-image.set1 {
-      border-radius: 50%;
+
+    .combo-item {
+      width: 110px;
+      height: 110px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
     }
-    .combination-image.set2 {
-      border-radius: 0;
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    .combo-item.hidden {
+      display: none;
     }
-    .combination-image img {
+    .combo-item img {
       width: 100%;
       height: 100%;
       object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
     }
-    .combination-image.set2 img {
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    .combo-item.drag-over {
+      transform: scale(1.08);
     }
 
-    /* 小屏适配 - 限制上移距离避免溢出 */
     @media(max-width:900px){
-      .container{ 
-        gap:100px;
-      }
-      .row:first-of-type {
-        margin-top: -80px; /* 小屏幕上移距离适度减少 */
-      }
-      .controls {
-        margin-bottom: -60px;
-      }
-      .row{
-        flex-wrap:wrap;
-        justify-content:center;
-      }
-      .left{
-        width:100%;
-        display:flex;
-        justify-content:center;
-      }
-      .right{ 
-        width:100%;
-        justify-content:center;
-        transform:translateY(20px);
-      }
-      .right.show{
-        transform:translateY(0);
-      }
-      .thumb{
-        width:80px;
-        height:80px;
-      }
+      .container{ gap:25px; margin-top: -5px; }
+      .row{ flex-wrap:wrap; justify-content:center; }
+      .left{ width:100%; justify-content:center; margin-bottom:10px; } 
+      .right{ width:100%; justify-content:center; }
+      .combo-track { height: 110px; gap: 20px; margin-top: 20px; }
+      .combo-item { width: 80px; height: 80px; }
     }
   </style>
 </head>
 <body>
-  <!-- 装饰云朵 -->
   <div class="cloud cloud1"></div>
   <div class="cloud cloud2"></div>
   <div class="cloud cloud3"></div>
 
   <div class="container">
-    <!-- 控制按钮 -->
     <div class="controls">
-      <button class="cancel-btn" id="cancelBtn">取消选择</button>
+      <button class="reset-btn" id="resetBtn">重置组合</button>
     </div>
 
-    <!-- 第一行 -->
-    <div class="row">
+    <!-- 第一行：圆形 -->
+    <div class="row" id="row1">
       <div class="left">
-        <div class="avatar-slot empty" data-slot="1">
-          点我<br>选择
-        </div>
+        <div class="category-btn" data-category="1">点击显示<br>圆形组图</div>
       </div>
-
-      <div class="right" data-panel="1">
+      <div class="right" data-category="1">
         <div class="thumb-grid">
-          <div class="thumb" draggable="true" data-src="thumb1.png" data-set="1">
-            <img src="thumb1.png" alt="头像1">
-          </div>
-          <div class="thumb" draggable="true" data-src="thumb2.png" data-set="1">
-            <img src="thumb2.png" alt="头像2">
-          </div>
-          <div class="thumb" draggable="true" data-src="thumb3.png" data-set="1">
-            <img src="thumb3.png" alt="头像3">
-          </div>
-          <div class="thumb" draggable="true" data-src="thumb4.jpg" data-set="1">
-            <img src="thumb4.jpg" alt="头像4">
-          </div>
-          <div class="thumb" draggable="true" data-src="thumb5.png" data-set="1">
-            <img src="thumb5.png" alt="头像5">
-          </div>
-          <div class="thumb" draggable="true" data-src="thumb6.png" data-set="1">
-            <img src="thumb6.png" alt="头像6">
-          </div>
+          <div class="thumb" data-src="thumb1.png" data-category="1" draggable="true"><img src="thumb1.png"></div>
+          <div class="thumb" data-src="thumb2.png" data-category="1" draggable="true"><img src="thumb2.png"></div>
+          <div class="thumb" data-src="thumb3.png" data-category="1" draggable="true"><img src="thumb3.png"></div>
+          <div class="thumb" data-src="thumb4.jpg" data-category="1" draggable="true"><img src="thumb4.jpg"></div>
+          <div class="thumb" data-src="thumb5.png" data-category="1" draggable="true"><img src="thumb5.png"></div>
+          <div class="thumb" data-src="thumb6.png" data-category="1" draggable="true"><img src="thumb6.png"></div>
         </div>
       </div>
     </div>
 
-    <!-- 第二行 -->
-    <div class="row">
+    <!-- + 按钮 -->
+    <div class="plus-btn" id="plusBtn">+</div>
+
+    <!-- 动态插入正方形行 -->
+    <div id="squareRowContainer"></div>
+
+    <!-- 第二行：三角形 -->
+    <div class="row" id="row2">
       <div class="left">
-        <div class="avatar-slot empty" data-slot="2">
-          点我<br>选择
-        </div>
+        <div class="category-btn" data-category="2">点击显示<br>三角形组图</div>
       </div>
-
-      <div class="right" data-panel="2">
+      <div class="right" data-category="2">
         <div class="thumb-grid">
-          <div class="thumb set2" draggable="true" data-src="1.jpg" data-set="2">
-            <img src="1.jpg" alt="头像1">
-          </div>
-          <div class="thumb set2" draggable="true" data-src="2.jpg" data-set="2">
-            <img src="2.jpg" alt="头像2">
-          </div>
-          <div class="thumb set2" draggable="true" data-src="3.jpg" data-set="2">
-            <img src="3.jpg" alt="头像3">
-          </div>
-          <div class="thumb set2" draggable="true" data-src="4.jpg" data-set="2">
-            <img src="4.jpg" alt="头像4">
-          </div>
-          <div class="thumb set2" draggable="true" data-src="5.jpg" data-set="2">
-            <img src="5.jpg" alt="头像5">
-          </div>
-          <div class="thumb set2" draggable="true" data-src="6.jpg" data-set="2">
-            <img src="6.jpg" alt="头像6">
-          </div>
-          <div class="thumb set2" draggable="true" data-src="7.jpg" data-set="2">
-            <img src="7.jpg" alt="头像7">
-          </div>
-          <div class="thumb set2" draggable="true" data-src="8.png" data-set="2">
-            <img src="8.png" alt="头像8">
-          </div>
+          <div class="thumb category2" data-src="1.jpg" data-category="2" draggable="true"><img src="1.jpg"></div>
+          <div class="thumb category2" data-src="2.jpg" data-category="2" draggable="true"><img src="2.jpg"></div>
+          <div class="thumb category2" data-src="3.jpg" data-category="2" draggable="true"><img src="3.jpg"></div>
+          <div class="thumb category2" data-src="4.jpg" data-category="2" draggable="true"><img src="4.jpg"></div>
+          <div class="thumb category2" data-src="5.jpg" data-category="2" draggable="true"><img src="5.jpg"></div>
+          <div class="thumb category2" data-src="6.jpg" data-category="2" draggable="true"><img src="6.jpg"></div>
+          <div class="thumb category2" data-src="7.jpg" data-category="2" draggable="true"><img src="7.jpg"></div>
+          <div class="thumb category2" data-src="8.png" data-category="2" draggable="true"><img src="8.png"></div>
         </div>
       </div>
     </div>
 
-    <!-- 组合结果显示 -->
-    <div class="combination-result" id="combinationResult">
-      <h3 class="combination-title">你的组合</h3>
-      <div class="combination-images">
-        <div class="combination-image set1" id="comboImage1"></div>
-        <div class="combination-image set2" id="comboImage2"></div>
-      </div>
+    <!-- 组合框 -->
+    <div class="combo-track" id="comboTrack">
+      <div class="combo-item" data-index="0"></div>
+      <div class="combo-item" data-index="1"></div>
+      <div class="combo-item" data-index="2" class="hidden"></div>
     </div>
   </div>
 
   <script>
-    // 存储选中的图片
-    let selectedFromSet1 = null;
-    let selectedFromSet2 = null;
+    const plusBtn = document.getElementById('plusBtn');
+    const squareRowContainer = document.getElementById('squareRowContainer');
+    const comboTrack = document.getElementById('comboTrack');
+    let comboItems = Array.from(document.querySelectorAll('.combo-item'));
 
-    // 保存原始的缩略图
-    const originalThumbs = {
-      1: Array.from(document.querySelectorAll('[data-set="1"]')),
-      2: Array.from(document.querySelectorAll('[data-set="2"]'))
-    };
+    const resetBtn = document.getElementById('resetBtn');
 
-    // 获取DOM元素
-    const avatarSlots = document.querySelectorAll('.avatar-slot');
-    const rightPanels = document.querySelectorAll('.right');
-    const combinationResult = document.getElementById('combinationResult');
-    const comboImage1 = document.getElementById('comboImage1');
-    const comboImage2 = document.getElementById('comboImage2');
-    const cancelBtn = document.getElementById('cancelBtn');
+    let images = [null, null, null];
+    let hasSquareRow = false;
 
-    // 为每个头像槽位添加点击事件 - 用于显示/隐藏选择面板
-    avatarSlots.forEach(slot => {
-      slot.addEventListener('click', () => {
-        const slotNum = slot.dataset.slot;
-        const panel = document.querySelector(`.right[data-panel="${slotNum}"]`);
-        
-        // 只切换当前面板的显示状态，不影响其他面板
-        panel.classList.toggle('show');
+    // 点击 + 显示正方形行
+    plusBtn.addEventListener('click', () => {
+      if (hasSquareRow) return;
+      hasSquareRow = true;
+
+      plusBtn.style.display = 'none';
+
+      // 创建正方形行
+      const squareRow = document.createElement('div');
+      squareRow.className = 'row';
+      squareRow.innerHTML = `
+        <div class="left">
+          <div class="category-btn" data-category="3">点击显示<br>正方形组图</div>
+        </div>
+        <div class="right" data-category="3">
+          <div class="thumb-grid">
+            <div class="thumb category3" data-src="84.png" data-category="3" draggable="true">
+              <img src="84.png">
+            </div>
+            <div class="thumb category3" data-src="85.png" data-category="3" draggable="true">
+              <img src="85.png">
+            </div>
+            <div class="thumb category3" data-src="86.png" data-category="3" draggable="true">
+              <img src="86.png">
+            </div>
+            <div class="thumb category3" data-src="87.jpg" data-category="3" draggable="true">
+              <img src="87.png">
+            </div>
+            <div class="thumb category3" data-src="88.jpg" data-category="3" draggable="true">
+              <img src="88.jpg">
+            </div>
+            <div class="thumb category3" data-src="89.jpg" data-category="3" draggable="true">
+              <img src="89.jpg">
+            </div>
+          </div>
+        </div>
+      `;
+      
+      squareRowContainer.appendChild(squareRow);
+      comboTrack.classList.add('three');
+      comboItems[2].classList.remove('hidden');
+
+      // 初始化正方形行元素
+      const squareBtn = squareRow.querySelector('.category-btn');
+      initCategoryBtn(squareBtn);
+      squareRow.querySelectorAll('.thumb').forEach(thumb => {
+        initThumbDrag(thumb);
       });
+
+      initDropZones();
     });
 
-    // 取消按钮点击事件
-    cancelBtn.addEventListener('click', resetToInitialState);
-
-    // 重置到初始状态
-    function resetToInitialState() {
-      // 清除选中状态
-      selectedFromSet1 = null;
-      selectedFromSet2 = null;
-      
-      // 隐藏组合结果
-      combinationResult.classList.remove('visible');
-      
-      // 隐藏取消按钮
-      cancelBtn.classList.remove('visible');
-      
-      // 更新面板显示所有图片
-      updatePanels();
-    }
-
-    // 拖拽功能实现
-    let draggedItem = null;
-
-    // 初始化拖拽事件
-    function initDragEvents() {
-      // 为所有缩略图添加拖拽事件
-      document.querySelectorAll('.thumb').forEach(thumb => {
-        // 只有第一组的图片可以被拖拽
-        if (thumb.dataset.set === "1") {
-          // 拖拽开始
-          thumb.addEventListener('dragstart', (e) => {
-            draggedItem = thumb;
-            // 存储拖拽的数据
-            e.dataTransfer.setData('text/plain', JSON.stringify({
-              src: thumb.dataset.src,
-              set: thumb.dataset.set
-            }));
-            // 添加拖拽样式
-            setTimeout(() => thumb.classList.add('dragging'), 0);
-          });
-
-          // 拖拽结束
-          thumb.addEventListener('dragend', () => {
-            draggedItem = null;
-            // 移除拖拽样式
-            thumb.classList.remove('dragging');
-            
-            // 移除所有拖放目标的高亮样式
-            document.querySelectorAll('.thumb.set2').forEach(t => {
-              t.classList.remove('drag-over');
-            });
-          });
-        } else {
-          // 第二组的图片作为拖放目标
-          // 允许拖放
-          thumb.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            thumb.classList.add('drag-over'); // 拖放时高亮
-          });
-
-          // 离开拖放区域
-          thumb.addEventListener('dragleave', () => {
-            thumb.classList.remove('drag-over'); // 移除高亮
-          });
-
-          // 执行放置
-          thumb.addEventListener('drop', (e) => {
-            e.preventDefault();
-            thumb.classList.remove('drag-over'); // 移除高亮
-            
-            // 获取拖拽的数据
-            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-            
-            // 检查是否是从第一组拖过来的图片
-            if (data.set === "1") {
-              // 记录选中的图片
-              selectedFromSet1 = data.src;
-              selectedFromSet2 = thumb.dataset.src;
-              
-              // 显示取消按钮
-              cancelBtn.classList.add('visible');
-              
-              // 更新组合结果显示
-              updateCombinationResult();
-              
-              // 更新右侧面板显示
-              updatePanels();
-            }
-          });
-        }
+    // 初始化缩略图拖拽
+    function initThumbDrag(thumb) {
+      thumb.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+          src: thumb.dataset.src,
+          cat: thumb.dataset.category
+        }));
+        setTimeout(() => thumb.classList.add('dragging'), 0);
+      });
+      thumb.addEventListener('dragend', () => {
+        thumb.classList.remove('dragging');
+        comboItems.forEach(item => item.classList.remove('drag-over'));
       });
     }
 
-    // 更新组合结果显示
-    function updateCombinationResult() {
-      if (selectedFromSet1 && selectedFromSet2) {
-        comboImage1.innerHTML = `<img src="${selectedFromSet1}" alt="选中的头像">`;
-        comboImage2.innerHTML = `<img src="${selectedFromSet2}" alt="选中的头像">`;
-        combinationResult.classList.add('visible');
-      }
+    // 初始化分类按钮
+    function initCategoryBtn(btn) {
+      btn.addEventListener('click', () => {
+        const cat = btn.dataset.category;
+        const panel = document.querySelector(`.right[data-category="${cat}"]`);
+        panel.classList.toggle('show');
+        btn.classList.toggle('active', panel.classList.contains('show'));
+      });
     }
 
-    // 更新面板显示
-    function updatePanels() {
-      // 更新第一组面板
-      const panel1 = document.querySelector(`.right[data-panel="1"]`);
-      const grid1 = panel1.querySelector('.thumb-grid');
-      const wasVisible1 = panel1.classList.contains('show');
-      
-      grid1.innerHTML = '';
-      if (selectedFromSet1) {
-        // 只显示选中的第一组图片
-        const selectedThumb = originalThumbs[1].find(thumb => 
-          thumb.dataset.src === selectedFromSet1
-        );
-        if (selectedThumb) {
-          const clone = selectedThumb.cloneNode(true);
-          grid1.appendChild(clone);
-        }
-      } else {
-        // 显示所有第一组图片
-        originalThumbs[1].forEach(thumb => {
-          const clone = thumb.cloneNode(true);
-          grid1.appendChild(clone);
+    // 初始化拖放区域
+    function initDropZones() {
+      // 为每个组合框项目添加拖放事件
+      comboItems.forEach((item, index) => {
+        // 清除现有事件监听
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+        comboItems = Array.from(document.querySelectorAll('.combo-item'));
+
+        newItem.addEventListener('dragover', e => {
+          e.preventDefault();
+          if (images[index] || (index === 2 && !hasSquareRow)) return;
+          
+          const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+          let isValid = false;
+          
+          // 两列模式：圆形→三角形
+          if (!hasSquareRow) {
+            isValid = (index === 0 && data.cat == 1) || (index === 1 && data.cat == 2);
+          } 
+          // 三列模式：圆形→正方形→三角形
+          else {
+            isValid = (index === 0 && data.cat == 1) || 
+                      (index === 1 && data.cat == 3) || 
+                      (index === 2 && data.cat == 2);
+          }
+          
+          if (isValid) {
+            newItem.classList.add('drag-over');
+          }
         });
-      }
-      if (wasVisible1) panel1.classList.add('show');
-      
-      // 更新第二组面板
-      const panel2 = document.querySelector(`.right[data-panel="2"]`);
-      const grid2 = panel2.querySelector('.thumb-grid');
-      const wasVisible2 = panel2.classList.contains('show');
-      
-      grid2.innerHTML = '';
-      if (selectedFromSet2) {
-        // 只显示选中的第二组图片
-        const selectedThumb = originalThumbs[2].find(thumb => 
-          thumb.dataset.src === selectedFromSet2
-        );
-        if (selectedThumb) {
-          const clone = selectedThumb.cloneNode(true);
-          grid2.appendChild(clone);
-        }
-      } else {
-        // 显示所有第二组图片
-        originalThumbs[2].forEach(thumb => {
-          const clone = thumb.cloneNode(true);
-          grid2.appendChild(clone);
+        
+        newItem.addEventListener('dragleave', () => {
+          newItem.classList.remove('drag-over');
         });
-      }
-      if (wasVisible2) panel2.classList.add('show');
-      
-      // 重新初始化拖拽事件
-      initDragEvents();
+        
+        newItem.addEventListener('drop', e => {
+          e.preventDefault();
+          newItem.classList.remove('drag-over');
+          
+          if (images[index] || (index === 2 && !hasSquareRow)) return;
+          
+          const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+          let isValid = false;
+          
+          if (!hasSquareRow) {
+            isValid = (index === 0 && data.cat == 1) || (index === 1 && data.cat == 2);
+          } else {
+            isValid = (index === 0 && data.cat == 1) || 
+                      (index === 1 && data.cat == 3) || 
+                      (index === 2 && data.cat == 2);
+          }
+          
+          if (isValid) {
+            images[index] = data.src;
+            newItem.innerHTML = `<img src="${data.src}" alt="">`;
+            updateUI();
+          }
+        });
+      });
     }
 
-    // 初始化
-    initDragEvents();
+    // 初始化元素
+    document.querySelectorAll('.thumb').forEach(initThumbDrag);
+    document.querySelectorAll('.category-btn').forEach(initCategoryBtn);
+    initDropZones();
+
+    // 修复重置按钮功能：彻底清空组合框
+    resetBtn.addEventListener('click', () => {
+      // 1. 清空图像数据数组
+      images = [null, null, null];
+      // 2. 重新获取最新的 combo-item 节点（关键）
+     comboItems = Array.from(document.querySelectorAll('.combo-item'));
+
+      // 2. 清空DOM中的图像元素
+      comboItems.forEach(item => {
+        item.innerHTML = ''; // 移除图片元素
+        item.classList.remove('drag-over'); // 移除拖拽状态
+      });
+      
+      // 3. 更新UI状态
+      updateUI();
+       // ✅ 4. 重新初始化拖放区域（关键）
+      initDropZones();
+    });
+
+    function updateUI() {
+      // 只有当组合框中有图片时才显示重置按钮
+      const hasImages = images.some(img => img !== null);
+      resetBtn.classList.toggle('visible', hasImages);
+    }
+
+    // 初始化UI状态
+    updateUI();
   </script>
 </body>
 </html>
