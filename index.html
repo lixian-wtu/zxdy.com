@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>动态三行拖拽组合</title>
   <style>
-    <!-- 样式部分保持不变 -->
     :root{
       --sky-blue:#87ceeb;
       --grass-green:#90ee90;
@@ -21,6 +20,7 @@
       display:flex;
       justify-content:center;
       overflow:auto;
+      position: relative;
     }
 
     .cloud {
@@ -28,10 +28,21 @@
       background:white;
       border-radius:100px;
       opacity:0.8;
+      z-index:1;
     }
     .cloud1{ width:120px; height:50px; top:10%; left:10%; } 
     .cloud2{ width:90px; height:40px; top:18%; right:15%; } 
     .cloud3{ width:100px; height:45px; top:25%; left:50%; } 
+    .cloud::before, .cloud::after {
+      content:'';
+      position:absolute;
+      background:white;
+      border-radius:50%;
+    }
+    .cloud1::before { width:60px; height:60px; top:-30px; left:20px; }
+    .cloud1::after { width:40px; height:40px; top:-15px; right:10px; }
+    .cloud2::before { width:50px; height:50px; top:-25px; left:15px; }
+    .cloud3::before { width:55px; height:55px; top:-28px; left:25px; }
 
     .container{
       width:95%;
@@ -373,10 +384,10 @@
     let comboItems = Array.from(document.querySelectorAll('.combo-item'));
     const resetBtn = document.getElementById('resetBtn');
 
-    let images = [null, null, null];
+    let images = [null, null, null]; // 存储不同类型的图片：[圆形, 三角形, 正方形]
     let hasTriangleRow = false;
 
-    // 所有圆形与正方形的两两组合映射（直接填写OSS上的文件名即可）
+    // 所有圆形与正方形的两两组合映射
     const fusionMap = {
       // 圆形thumb1与正方形组合
       'thumb1.png_Z7.png': 'result_thumb1_Z7.png',
@@ -513,53 +524,59 @@
       });
       comboItems = Array.from(document.querySelectorAll('.combo-item'));
 
-      comboItems.forEach((item, index) => {
-        item.addEventListener('dragover', e => {
-          e.preventDefault();
-          if (images[index]) return;
-
-          const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-          let isValid = false;
-
-          if (!hasTriangleRow) {
-            isValid = (index === 0 && data.cat == 1) || (index === 1 && data.cat == 3);
+      // 为组合框整体添加拖拽事件监听
+      comboTrack.addEventListener('dragover', e => {
+        e.preventDefault();
+        const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+        const category = parseInt(data.cat);
+        
+        // 检查该类型是否已存在且可以拖放
+        if ((category === 1 && images[0] !== null) || 
+            (category === 2 && images[1] !== null) ||
+            (category === 3 && images[2] !== null)) {
+          comboItems.forEach(item => item.classList.remove('drag-over'));
+          return;
+        }
+        
+        // 为所有空位置添加拖拽样式
+        comboItems.forEach((item, index) => {
+          if (images[index] === null) {
+            item.classList.add('drag-over');
           } else {
-            isValid = (index === 0 && data.cat == 1) ||
-                      (index === 1 && data.cat == 2) ||
-                      (index === 2 && data.cat == 3);
-          }
-
-          if (isValid) item.classList.add('drag-over');
-        });
-
-        item.addEventListener('dragleave', () => {
-          item.classList.remove('drag-over');
-        });
-
-        item.addEventListener('drop', e => {
-          e.preventDefault();
-          item.classList.remove('drag-over');
-          if (images[index]) return;
-
-          const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-          let isValid = false;
-
-          if (!hasTriangleRow) {
-            isValid = (index === 0 && data.cat == 1) || (index === 1 && data.cat == 3);
-          } else {
-            isValid = (index === 0 && data.cat == 1) ||
-                      (index === 1 && data.cat == 2) ||
-                      (index === 2 && data.cat == 3);
-          }
-
-          if (isValid) {
-            const fullSrc = getImageUrl(data.src);
-            images[index] = fullSrc;
-            item.innerHTML = `<img src="${fullSrc}" alt="">`;
-            updateUI();
-            playSuccessSound();
+            item.classList.remove('drag-over');
           }
         });
+      });
+
+      comboTrack.addEventListener('dragleave', () => {
+        comboItems.forEach(item => item.classList.remove('drag-over'));
+      });
+
+      comboTrack.addEventListener('drop', e => {
+        e.preventDefault();
+        comboItems.forEach(item => item.classList.remove('drag-over'));
+        
+        const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+        const category = parseInt(data.cat);
+        let targetIndex = -1;
+        
+        // 根据类型自动分配位置
+        if (category === 1) {
+          targetIndex = 0; // 圆形固定在第一个位置
+        } else if (category === 2) {
+          targetIndex = 1; // 三角形固定在第二个位置
+        } else if (category === 3) {
+          targetIndex = 2; // 正方形固定在第三个位置
+        }
+        
+        // 检查目标位置是否可用
+        if (targetIndex !== -1 && images[targetIndex] === null) {
+          const fullSrc = getImageUrl(data.src);
+          images[targetIndex] = fullSrc;
+          comboItems[targetIndex].innerHTML = `<img src="${fullSrc}" alt="">`;
+          updateUI();
+          playSuccessSound();
+        }
       });
     }
 
@@ -606,13 +623,10 @@
       });
       const comboKey = `${imgNames[0]}_${imgNames[1]}`;
 
-      // 模拟加载过程，2秒后显示对应融合结果（自动拼接OSS路径）
+      // 模拟加载过程，2秒后显示对应融合结果
       setTimeout(() => {
-        // 获取对应融合结果图片（如果没有映射则使用默认图）
         const resultFilename = fusionMap[comboKey] || 'result.png';
         const resultImage = getImageUrl(resultFilename);
-        
-        // 显示结果图片
         resultOverlay.innerHTML = `<img src="${resultImage}" alt="融合结果">`;
         fusionBtn.disabled = false;
       }, 2000);
