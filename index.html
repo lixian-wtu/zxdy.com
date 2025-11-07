@@ -86,9 +86,8 @@
       box-shadow: 0 6px 16px rgba(0,0,0,0.2);
       z-index: 15;
       transition: all 0.3s ease;
-
-        margin-left: 0;         /* 保证贴左 */
-  align-self: flex-start; /* 保证在容器左边 */
+      margin-left: 0;
+      align-self: flex-start;
     }
     .plus-btn:hover {
       transform: scale(1.1);
@@ -250,30 +249,28 @@
       </div>
     </div>
 
-    <!-- + 按钮 -->
+    <!-- + 按钮（放在圆形和正方形中间） -->
     <div class="plus-btn" id="plusBtn">+</div>
 
-    <!-- 动态插入正方形行 -->
-    <div id="squareRowContainer"></div>
-
-    <!-- 第二行：三角形 -->
-    <div class="row" id="row2">
+    <!-- 初始正方形行 -->
+    <div class="row" id="rowSquare">
       <div class="left">
-        <div class="category-btn" data-category="2">点击显示<br>三角形组图</div>
+        <div class="category-btn" data-category="3">点击显示<br>正方形组图</div>
       </div>
-      <div class="right" data-category="2">
+      <div class="right" data-category="3">
         <div class="thumb-grid">
-          <div class="thumb category2" data-src="1.jpg" data-category="2" draggable="true"><img src="1.jpg"></div>
-          <div class="thumb category2" data-src="2.jpg" data-category="2" draggable="true"><img src="2.jpg"></div>
-          <div class="thumb category2" data-src="3.jpg" data-category="2" draggable="true"><img src="3.jpg"></div>
-          <div class="thumb category2" data-src="4.jpg" data-category="2" draggable="true"><img src="4.jpg"></div>
-          <div class="thumb category2" data-src="5.jpg" data-category="2" draggable="true"><img src="5.jpg"></div>
-          <div class="thumb category2" data-src="6.jpg" data-category="2" draggable="true"><img src="6.jpg"></div>
-          <div class="thumb category2" data-src="7.jpg" data-category="2" draggable="true"><img src="7.jpg"></div>
-          <div class="thumb category2" data-src="8.png" data-category="2" draggable="true"><img src="8.png"></div>
+          <div class="thumb category3" data-src="Z7.png" data-category="3" draggable="true"><img src="Z7.png"></div>
+          <div class="thumb category3" data-src="Z2.png" data-category="3" draggable="true"><img src="Z2.png"></div>
+          <div class="thumb category3" data-src="Z3.png" data-category="3" draggable="true"><img src="Z3.png"></div>
+          <div class="thumb category3" data-src="Z4.png" data-category="3" draggable="true"><img src="Z4.png"></div>
+          <div class="thumb category3" data-src="Z5.png" data-category="3" draggable="true"><img src="Z5.png"></div>
+          <div class="thumb category3" data-src="Z6.png" data-category="3" draggable="true"><img src="Z6.png"></div>
         </div>
       </div>
     </div>
+
+    <!-- 三角形行将在 + 按钮后面（中间）动态插入 -->
+    <div id="triangleRowContainer"></div>
 
     <!-- 组合框 -->
     <div class="combo-track" id="comboTrack">
@@ -285,68 +282,68 @@
 
   <script>
     const plusBtn = document.getElementById('plusBtn');
-    const squareRowContainer = document.getElementById('squareRowContainer');
     const comboTrack = document.getElementById('comboTrack');
     let comboItems = Array.from(document.querySelectorAll('.combo-item'));
-
     const resetBtn = document.getElementById('resetBtn');
 
     let images = [null, null, null];
-    let hasSquareRow = false;
+    let hasTriangleRow = false;
 
-    // 点击 + 显示正方形行
+    // 动态生成「叮」音效（无需文件）
+    function playSuccessSound() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 880; // 清脆高音
+
+      gainNode.gain.setValueAtTime(0, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.3);
+    }
+
+    // 点击 + ：插入三角形行（中间）
     plusBtn.addEventListener('click', () => {
-      if (hasSquareRow) return;
-      hasSquareRow = true;
-
+      if (hasTriangleRow) return;
+      hasTriangleRow = true;
       plusBtn.style.display = 'none';
 
-      // 创建正方形行
-      const squareRow = document.createElement('div');
-      squareRow.className = 'row';
-      squareRow.innerHTML = `
+      const triangleRow = document.createElement('div');
+      triangleRow.className = 'row';
+      triangleRow.innerHTML = `
         <div class="left">
-          <div class="category-btn" data-category="3">点击显示<br>正方形组图</div>
+          <div class="category-btn" data-category="2">点击显示<br>三角形组图</div>
         </div>
-        <div class="right" data-category="3">
+        <div class="right" data-category="2">
           <div class="thumb-grid">
-            <div class="thumb category3" data-src="84.png" data-category="3" draggable="true">
-              <img src="84.png">
-            </div>
-            <div class="thumb category3" data-src="85.png" data-category="3" draggable="true">
-              <img src="85.png">
-            </div>
-            <div class="thumb category3" data-src="86.png" data-category="3" draggable="true">
-              <img src="86.png">
-            </div>
-            <div class="thumb category3" data-src="87.jpg" data-category="3" draggable="true">
-              <img src="87.png">
-            </div>
-            <div class="thumb category3" data-src="88.jpg" data-category="3" draggable="true">
-              <img src="88.jpg">
-            </div>
-            <div class="thumb category3" data-src="89.jpg" data-category="3" draggable="true">
-              <img src="89.jpg">
-            </div>
+            <div class="thumb category2" data-src="S1.png" data-category="2" draggable="true"><img src="S1.png"></div>
+            <div class="thumb category2" data-src="S2.png" data-category="2" draggable="true"><img src="S2.png"></div>
+            <div class="thumb category2" data-src="S3.png" data-category="2" draggable="true"><img src="S3.png"></div>
+            <div class="thumb category2" data-src="S4.png" data-category="2" draggable="true"><img src="S4.png"></div>
+            <div class="thumb category2" data-src="S5.png" data-category="2" draggable="true"><img src="S5.png"></div>
+            <div class="thumb category2" data-src="S6.png" data-category="2" draggable="true"><img src="S6.png"></div>
           </div>
         </div>
       `;
-      
-      squareRowContainer.appendChild(squareRow);
+
+      plusBtn.parentNode.insertBefore(triangleRow, plusBtn.nextSibling);
+
+      const triangleBtn = triangleRow.querySelector('.category-btn');
+      initCategoryBtn(triangleBtn);
+      triangleRow.querySelectorAll('.thumb').forEach(thumb => initThumbDrag(thumb));
+
       comboTrack.classList.add('three');
       comboItems[2].classList.remove('hidden');
-
-      // 初始化正方形行元素
-      const squareBtn = squareRow.querySelector('.category-btn');
-      initCategoryBtn(squareBtn);
-      squareRow.querySelectorAll('.thumb').forEach(thumb => {
-        initThumbDrag(thumb);
-      });
-
       initDropZones();
     });
 
-    // 初始化缩略图拖拽
     function initThumbDrag(thumb) {
       thumb.addEventListener('dragstart', e => {
         e.dataTransfer.setData('text/plain', JSON.stringify({
@@ -361,7 +358,6 @@
       });
     }
 
-    // 初始化分类按钮
     function initCategoryBtn(btn) {
       btn.addEventListener('click', () => {
         const cat = btn.dataset.category;
@@ -371,99 +367,82 @@
       });
     }
 
-    // 初始化拖放区域
     function initDropZones() {
-      // 为每个组合框项目添加拖放事件
       comboItems.forEach((item, index) => {
-        // 清除现有事件监听
         const newItem = item.cloneNode(true);
         item.parentNode.replaceChild(newItem, item);
-        comboItems = Array.from(document.querySelectorAll('.combo-item'));
+      });
+      comboItems = Array.from(document.querySelectorAll('.combo-item'));
 
-        newItem.addEventListener('dragover', e => {
+      comboItems.forEach((item, index) => {
+        item.addEventListener('dragover', e => {
           e.preventDefault();
-          if (images[index] || (index === 2 && !hasSquareRow)) return;
-          
+          if (images[index]) return;
+
           const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
           let isValid = false;
-          
-          // 两列模式：圆形→三角形
-          if (!hasSquareRow) {
-            isValid = (index === 0 && data.cat == 1) || (index === 1 && data.cat == 2);
-          } 
-          // 三列模式：圆形→正方形→三角形
-          else {
-            isValid = (index === 0 && data.cat == 1) || 
-                      (index === 1 && data.cat == 3) || 
-                      (index === 2 && data.cat == 2);
-          }
-          
-          if (isValid) {
-            newItem.classList.add('drag-over');
-          }
-        });
-        
-        newItem.addEventListener('dragleave', () => {
-          newItem.classList.remove('drag-over');
-        });
-        
-        newItem.addEventListener('drop', e => {
-          e.preventDefault();
-          newItem.classList.remove('drag-over');
-          
-          if (images[index] || (index === 2 && !hasSquareRow)) return;
-          
-          const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-          let isValid = false;
-          
-          if (!hasSquareRow) {
-            isValid = (index === 0 && data.cat == 1) || (index === 1 && data.cat == 2);
+
+          if (!hasTriangleRow) {
+            isValid = (index === 0 && data.cat == 1) || (index === 1 && data.cat == 3);
           } else {
-            isValid = (index === 0 && data.cat == 1) || 
-                      (index === 1 && data.cat == 3) || 
-                      (index === 2 && data.cat == 2);
+            isValid = (index === 0 && data.cat == 1) ||
+                      (index === 1 && data.cat == 2) ||
+                      (index === 2 && data.cat == 3);
           }
-          
+
+          if (isValid) item.classList.add('drag-over');
+        });
+
+        item.addEventListener('dragleave', () => {
+          item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', e => {
+          e.preventDefault();
+          item.classList.remove('drag-over');
+          if (images[index]) return;
+
+          const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+          let isValid = false;
+
+          if (!hasTriangleRow) {
+            isValid = (index === 0 && data.cat == 1) || (index === 1 && data.cat == 3);
+          } else {
+            isValid = (index === 0 && data.cat == 1) ||
+                      (index === 1 && data.cat == 2) ||
+                      (index === 2 && data.cat == 3);
+          }
+
           if (isValid) {
             images[index] = data.src;
-            newItem.innerHTML = `<img src="${data.src}" alt="">`;
+            item.innerHTML = `<img src="${data.src}" alt="">`;
             updateUI();
+            playSuccessSound(); // 播放「叮」声
           }
         });
       });
     }
 
-    // 初始化元素
-    document.querySelectorAll('.thumb').forEach(initThumbDrag);
-    document.querySelectorAll('.category-btn').forEach(initCategoryBtn);
-    initDropZones();
-
-    // 修复重置按钮功能：彻底清空组合框
     resetBtn.addEventListener('click', () => {
-      // 1. 清空图像数据数组
       images = [null, null, null];
-      // 2. 重新获取最新的 combo-item 节点（关键）
-     comboItems = Array.from(document.querySelectorAll('.combo-item'));
-
-      // 2. 清空DOM中的图像元素
+      comboItems = Array.from(document.querySelectorAll('.combo-item'));
       comboItems.forEach(item => {
-        item.innerHTML = ''; // 移除图片元素
-        item.classList.remove('drag-over'); // 移除拖拽状态
+        item.innerHTML = '';
+        item.classList.remove('drag-over');
       });
-      
-      // 3. 更新UI状态
       updateUI();
-       // ✅ 4. 重新初始化拖放区域（关键）
       initDropZones();
     });
 
     function updateUI() {
-      // 只有当组合框中有图片时才显示重置按钮
       const hasImages = images.some(img => img !== null);
       resetBtn.classList.toggle('visible', hasImages);
     }
 
-    // 初始化UI状态
+    // 初始化
+    document.querySelectorAll('.thumb').forEach(initThumbDrag);
+    document.querySelectorAll('.category-btn').forEach(initCategoryBtn);
+    initDropZones();
     updateUI();
   </script>
 </body>
