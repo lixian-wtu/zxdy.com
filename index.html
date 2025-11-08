@@ -44,16 +44,20 @@
     .cloud2::before { width:50px; height:50px; top:-25px; left:15px; }
     .cloud3::before { width:55px; height:55px; top:-28px; left:25px; }
 
-    .container{
-      width:95%;
-      max-width:1200px;
-      position:relative;
-      z-index:10;
-      display:flex;
-      flex-direction:column;
-      gap:30px; 
-      margin-top: -10px; 
-    }
+  .container {
+  width: 95%;
+  max-width: 1200px;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin: 0 auto;                    /* 水平居中 */
+  min-height: 100vh;                 /* 占满高度 */
+  justify-content: center;           /* 垂直居中 */
+  align-items: center;               /* 子元素水平居中 */
+  padding: 40px 20px;                /* 上下留白 */
+}
 
     .controls {
       text-align: center;
@@ -73,12 +77,14 @@
     .reset-btn.visible { display: inline-block; }
     .reset-btn:hover { background: #5a6268; }
 
-    .row {
-      display:flex;
-      gap:20px;
-      align-items:center;
-      position: relative;
-    }
+.row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  position: relative;
+  justify-content: center;     /* 新增：水平居中 */
+  flex-wrap: wrap;             /* 响应式换行 */
+}
     #row1 {
       margin-top: -5px;
     }
@@ -315,7 +321,7 @@
     <!-- 第一行：圆形 -->
     <div class="row" id="row1">
       <div class="left">
-        <div class="category-btn" data-category="1">点击显示<br>圆形组图</div>
+        <div class="category-btn" data-category="1"></div>
       </div>
       <div class="right" data-category="1">
         <div class="thumb-grid">
@@ -335,7 +341,7 @@
     <!-- 初始正方形行 -->
     <div class="row" id="rowSquare">
       <div class="left">
-        <div class="category-btn" data-category="3">点击显示<br>正方形组图</div>
+        <div class="category-btn" data-category="3"></div>
       </div>
       <div class="right" data-category="3">
         <div class="thumb-grid">
@@ -371,130 +377,351 @@
   </div>
 
   <script>
-    // 统一管理OSS图片基础路径
+    // ==================== 1. 基础配置 ====================
     const OSS_BASE = 'https://huwei1314.oss-cn-beijing.aliyuncs.com/images/';
-    
-    // 图片路径处理工具函数（自动拼接OSS路径）
     const getImageUrl = (filename) => `${OSS_BASE}${filename}`;
 
-    const plusBtn = document.getElementById('plusBtn');
-    const comboTrack = document.getElementById('comboTrack');
-    const resultOverlay = document.getElementById('resultOverlay');
-    const fusionBtn = document.getElementById('fusionBtn');
-    let comboItems = Array.from(document.querySelectorAll('.combo-item'));
-    const resetBtn = document.getElementById('resetBtn');
+    const plusBtn      = document.getElementById('plusBtn');
+    const comboTrack   = document.getElementById('comboTrack');
+    const resultOverlay= document.getElementById('resultOverlay');
+    const fusionBtn    = document.getElementById('fusionBtn');
+    const resetBtn     = document.getElementById('resetBtn');
 
-    let images = [null, null, null]; // 存储不同类型的图片：[圆形, 三角形, 正方形]
+    let comboItems = Array.from(document.querySelectorAll('.combo-item'));
+    let images = [null, null, null];               // [圆, 三角, 方]
     let hasTriangleRow = false;
 
-    // 所有圆形与正方形的两两组合映射
+    // ==================== 2. 融合映射（支持 2/3 张） ====================
     const fusionMap = {
-      // 圆形thumb1与正方形组合
+      // 圆形 + 正方形（你原来的 36 条）
       'thumb1.png_Z7.png': 'result_thumb1_Z7.png',
       'thumb1.png_Z2.png': 'result_thumb1_Z2.png',
       'thumb1.png_Z3.png': 'result_thumb1_Z3.png',
       'thumb1.png_Z4.png': 'result_thumb1_Z4.png',
       'thumb1.png_Z5.png': 'result_thumb1_Z5.png',
       'thumb1.png_Z6.png': 'result_thumb1_Z6.png',
-
-      // 圆形thumb2与正方形组合
       'thumb2.png_Z7.png': 'result_thumb2_Z7.png',
       'thumb2.png_Z2.png': 'result_thumb2_Z2.png',
       'thumb2.png_Z3.png': 'result_thumb2_Z3.png',
       'thumb2.png_Z4.png': 'result_thumb2_Z4.png',
       'thumb2.png_Z5.png': 'result_thumb2_Z5.png',
       'thumb2.png_Z6.png': 'result_thumb2_Z6.png',
-
-      // 圆形thumb3与正方形组合
       'thumb3.png_Z7.png': 'result_thumb3_Z7.png',
       'thumb3.png_Z2.png': 'result_thumb3_Z2.png',
       'thumb3.png_Z3.png': 'result_thumb3_Z3.png',
       'thumb3.png_Z4.png': 'result_thumb3_Z4.png',
       'thumb3.png_Z5.png': 'result_thumb3_Z5.png',
       'thumb3.png_Z6.png': 'result_thumb3_Z6.png',
-
-      // 圆形thumb4与正方形组合
       'thumb4.jpg_Z7.png': 'result_thumb4_Z7.png',
       'thumb4.jpg_Z2.png': 'result_thumb4_Z2.png',
       'thumb4.jpg_Z3.png': 'result_thumb4_Z3.png',
       'thumb4.jpg_Z4.png': 'result_thumb4_Z4.png',
       'thumb4.jpg_Z5.png': 'result_thumb4_Z5.png',
       'thumb4.jpg_Z6.png': 'result_thumb4_Z6.png',
-
-      // 圆形thumb5与正方形组合
       'thumb5.png_Z7.png': 'result_thumb5_Z7.png',
       'thumb5.png_Z2.png': 'result_thumb5_Z2.png',
       'thumb5.png_Z3.png': 'result_thumb5_Z3.png',
       'thumb5.png_Z4.png': 'result_thumb5_Z4.png',
       'thumb5.png_Z5.png': 'result_thumb5_Z5.png',
       'thumb5.png_Z6.png': 'result_thumb5_Z6.png',
-
-      // 圆形thumb6与正方形组合
       'thumb6.png_Z7.png': 'result_thumb6_Z7.png',
       'thumb6.png_Z2.png': 'result_thumb6_Z2.png',
       'thumb6.png_Z3.png': 'result_thumb6_Z3.png',
       'thumb6.png_Z4.png': 'result_thumb6_Z4.png',
       'thumb6.png_Z5.png': 'result_thumb6_Z5.png',
-      'thumb6.png_Z6.png': 'result_thumb6_Z6.png'
+      'thumb6.png_Z6.png': 'result_thumb6_Z6.png',
+
+  
+      // 三张组合（示例）
+      // 三张组合：圆_三角_方 → result_圆_三角_方
+'thumb1.png_S1.png_Z7.png': 'result_thumb1_S1_Z7.png',
+'thumb1.png_S1.png_Z2.png': 'result_thumb1_S1_Z2.png',
+'thumb1.png_S1.png_Z3.png': 'result_thumb1_S1_Z3.png',
+'thumb1.png_S1.png_Z4.png': 'result_thumb1_S1_Z4.png',
+'thumb1.png_S1.png_Z5.png': 'result_thumb1_S1_Z5.png',
+'thumb1.png_S1.png_Z6.png': 'result_thumb1_S1_Z6.png',
+'thumb1.png_S2.png_Z7.png': 'result_thumb1_S2_Z7.png',
+'thumb1.png_S2.png_Z2.png': 'result_thumb1_S2_Z2.png',
+'thumb1.png_S2.png_Z3.png': 'result_thumb1_S2_Z3.png',
+'thumb1.png_S2.png_Z4.png': 'result_thumb1_S2_Z4.png',
+'thumb1.png_S2.png_Z5.png': 'result_thumb1_S2_Z5.png',
+'thumb1.png_S2.png_Z6.png': 'result_thumb1_S2_Z6.png',
+'thumb1.png_S3.png_Z7.png': 'result_thumb1_S3_Z7.png',
+'thumb1.png_S3.png_Z2.png': 'result_thumb1_S3_Z2.png',
+'thumb1.png_S3.png_Z3.png': 'result_thumb1_S3_Z3.png',
+'thumb1.png_S3.png_Z4.png': 'result_thumb1_S3_Z4.png',
+'thumb1.png_S3.png_Z5.png': 'result_thumb1_S3_Z5.png',
+'thumb1.png_S3.png_Z6.png': 'result_thumb1_S3_Z6.png',
+'thumb1.png_S4.png_Z7.png': 'result_thumb1_S4_Z7.png',
+'thumb1.png_S4.png_Z2.png': 'result_thumb1_S4_Z2.png',
+'thumb1.png_S4.png_Z3.png': 'result_thumb1_S4_Z3.png',
+'thumb1.png_S4.png_Z4.png': 'result_thumb1_S4_Z4.png',
+'thumb1.png_S4.png_Z5.png': 'result_thumb1_S4_Z5.png',
+'thumb1.png_S4.png_Z6.png': 'result_thumb1_S4_Z6.png',
+'thumb1.png_S5.png_Z7.png': 'result_thumb1_S5_Z7.png',
+'thumb1.png_S5.png_Z2.png': 'result_thumb1_S5_Z2.png',
+'thumb1.png_S5.png_Z3.png': 'result_thumb1_S5_Z3.png',
+'thumb1.png_S5.png_Z4.png': 'result_thumb1_S5_Z4.png',
+'thumb1.png_S5.png_Z5.png': 'result_thumb1_S5_Z5.png',
+'thumb1.png_S5.png_Z6.png': 'result_thumb1_S5_Z6.png',
+'thumb1.png_S6.png_Z7.png': 'result_thumb1_S6_Z7.png',
+'thumb1.png_S6.png_Z2.png': 'result_thumb1_S6_Z2.png',
+'thumb1.png_S6.png_Z3.png': 'result_thumb1_S6_Z3.png',
+'thumb1.png_S6.png_Z4.png': 'result_thumb1_S6_Z4.png',
+'thumb1.png_S6.png_Z5.png': 'result_thumb1_S6_Z5.png',
+'thumb1.png_S6.png_Z6.png': 'result_thumb1_S6_Z6.png',
+
+'thumb2.png_S1.png_Z7.png': 'result_thumb2_S1_Z7.png',
+'thumb2.png_S1.png_Z2.png': 'result_thumb2_S1_Z2.png',
+'thumb2.png_S1.png_Z3.png': 'result_thumb2_S1_Z3.png',
+'thumb2.png_S1.png_Z4.png': 'result_thumb2_S1_Z4.png',
+'thumb2.png_S1.png_Z5.png': 'result_thumb2_S1_Z5.png',
+'thumb2.png_S1.png_Z6.png': 'result_thumb2_S1_Z6.png',
+'thumb2.png_S2.png_Z7.png': 'result_thumb2_S2_Z7.png',
+'thumb2.png_S2.png_Z2.png': 'result_thumb2_S2_Z2.png',
+'thumb2.png_S2.png_Z3.png': 'result_thumb2_S2_Z3.png',
+'thumb2.png_S2.png_Z4.png': 'result_thumb2_S2_Z4.png',
+'thumb2.png_S2.png_Z5.png': 'result_thumb2_S2_Z5.png',
+'thumb2.png_S2.png_Z6.png': 'result_thumb2_S2_Z6.png',
+'thumb2.png_S3.png_Z7.png': 'result_thumb2_S3_Z7.png',
+'thumb2.png_S3.png_Z2.png': 'result_thumb2_S3_Z2.png',
+'thumb2.png_S3.png_Z3.png': 'result_thumb2_S3_Z3.png',
+'thumb2.png_S3.png_Z4.png': 'result_thumb2_S3_Z4.png',
+'thumb2.png_S3.png_Z5.png': 'result_thumb2_S3_Z5.png',
+'thumb2.png_S3.png_Z6.png': 'result_thumb2_S3_Z6.png',
+'thumb2.png_S4.png_Z7.png': 'result_thumb2_S4_Z7.png',
+'thumb2.png_S4.png_Z2.png': 'result_thumb2_S4_Z2.png',
+'thumb2.png_S4.png_Z3.png': 'result_thumb2_S4_Z3.png',
+'thumb2.png_S4.png_Z4.png': 'result_thumb2_S4_Z4.png',
+'thumb2.png_S4.png_Z5.png': 'result_thumb2_S4_Z5.png',
+'thumb2.png_S4.png_Z6.png': 'result_thumb2_S4_Z6.png',
+'thumb2.png_S5.png_Z7.png': 'result_thumb2_S5_Z7.png',
+'thumb2.png_S5.png_Z2.png': 'result_thumb2_S5_Z2.png',
+'thumb2.png_S5.png_Z3.png': 'result_thumb2_S5_Z3.png',
+'thumb2.png_S5.png_Z4.png': 'result_thumb2_S5_Z4.png',
+'thumb2.png_S5.png_Z5.png': 'result_thumb2_S5_Z5.png',
+'thumb2.png_S5.png_Z6.png': 'result_thumb2_S5_Z6.png',
+'thumb2.png_S6.png_Z7.png': 'result_thumb2_S6_Z7.png',
+'thumb2.png_S6.png_Z2.png': 'result_thumb2_S6_Z2.png',
+'thumb2.png_S6.png_Z3.png': 'result_thumb2_S6_Z3.png',
+'thumb2.png_S6.png_Z4.png': 'result_thumb2_S6_Z4.png',
+'thumb2.png_S6.png_Z5.png': 'result_thumb2_S6_Z5.png',
+'thumb2.png_S6.png_Z6.png': 'result_thumb2_S6_Z6.png',
+
+'thumb3.png_S1.png_Z7.png': 'result_thumb3_S1_Z7.png',
+'thumb3.png_S1.png_Z2.png': 'result_thumb3_S1_Z2.png',
+'thumb3.png_S1.png_Z3.png': 'result_thumb3_S1_Z3.png',
+'thumb3.png_S1.png_Z4.png': 'result_thumb3_S1_Z4.png',
+'thumb3.png_S1.png_Z5.png': 'result_thumb3_S1_Z5.png',
+'thumb3.png_S1.png_Z6.png': 'result_thumb3_S1_Z6.png',
+'thumb3.png_S2.png_Z7.png': 'result_thumb3_S2_Z7.png',
+'thumb3.png_S2.png_Z2.png': 'result_thumb3_S2_Z2.png',
+'thumb3.png_S2.png_Z3.png': 'result_thumb3_S2_Z3.png',
+'thumb3.png_S2.png_Z4.png': 'result_thumb3_S2_Z4.png',
+'thumb3.png_S2.png_Z5.png': 'result_thumb3_S2_Z5.png',
+'thumb3.png_S2.png_Z6.png': 'result_thumb3_S2_Z6.png',
+'thumb3.png_S3.png_Z7.png': 'result_thumb3_S3_Z7.png',
+'thumb3.png_S3.png_Z2.png': 'result_thumb3_S3_Z2.png',
+'thumb3.png_S3.png_Z3.png': 'result_thumb3_S3_Z3.png',
+'thumb3.png_S3.png_Z4.png': 'result_thumb3_S3_Z4.png',
+'thumb3.png_S3.png_Z5.png': 'result_thumb3_S3_Z5.png',
+'thumb3.png_S3.png_Z6.png': 'result_thumb3_S3_Z6.png',
+'thumb3.png_S4.png_Z7.png': 'result_thumb3_S4_Z7.png',
+'thumb3.png_S4.png_Z2.png': 'result_thumb3_S4_Z2.png',
+'thumb3.png_S4.png_Z3.png': 'result_thumb3_S4_Z3.png',
+'thumb3.png_S4.png_Z4.png': 'result_thumb3_S4_Z4.png',
+'thumb3.png_S4.png_Z5.png': 'result_thumb3_S4_Z5.png',
+'thumb3.png_S4.png_Z6.png': 'result_thumb3_S4_Z6.png',
+'thumb3.png_S5.png_Z7.png': 'result_thumb3_S5_Z7.png',
+'thumb3.png_S5.png_Z2.png': 'result_thumb3_S5_Z2.png',
+'thumb3.png_S5.png_Z3.png': 'result_thumb3_S5_Z3.png',
+'thumb3.png_S5.png_Z4.png': 'result_thumb3_S5_Z4.png',
+'thumb3.png_S5.png_Z5.png': 'result_thumb3_S5_Z5.png',
+'thumb3.png_S5.png_Z6.png': 'result_thumb3_S5_Z6.png',
+'thumb3.png_S6.png_Z7.png': 'result_thumb3_S6_Z7.png',
+'thumb3.png_S6.png_Z2.png': 'result_thumb3_S6_Z2.png',
+'thumb3.png_S6.png_Z3.png': 'result_thumb3_S6_Z3.png',
+'thumb3.png_S6.png_Z4.png': 'result_thumb3_S6_Z4.png',
+'thumb3.png_S6.png_Z5.png': 'result_thumb3_S6_Z5.png',
+'thumb3.png_S6.png_Z6.png': 'result_thumb3_S6_Z6.png',
+
+'thumb4.jpg_S1.png_Z7.png': 'result_thumb4_S1_Z7.png',
+'thumb4.jpg_S1.png_Z2.png': 'result_thumb4_S1_Z2.png',
+'thumb4.jpg_S1.png_Z3.png': 'result_thumb4_S1_Z3.png',
+'thumb4.jpg_S1.png_Z4.png': 'result_thumb4_S1_Z4.png',
+'thumb4.jpg_S1.png_Z5.png': 'result_thumb4_S1_Z5.png',
+'thumb4.jpg_S1.png_Z6.png': 'result_thumb4_S1_Z6.png',
+'thumb4.jpg_S2.png_Z7.png': 'result_thumb4_S2_Z7.png',
+'thumb4.jpg_S2.png_Z2.png': 'result_thumb4_S2_Z2.png',
+'thumb4.jpg_S2.png_Z3.png': 'result_thumb4_S2_Z3.png',
+'thumb4.jpg_S2.png_Z4.png': 'result_thumb4_S2_Z4.png',
+'thumb4.jpg_S2.png_Z5.png': 'result_thumb4_S2_Z5.png',
+'thumb4.jpg_S2.png_Z6.png': 'result_thumb4_S2_Z6.png',
+'thumb4.jpg_S3.png_Z7.png': 'result_thumb4_S3_Z7.png',
+'thumb4.jpg_S3.png_Z2.png': 'result_thumb4_S3_Z2.png',
+'thumb4.jpg_S3.png_Z3.png': 'result_thumb4_S3_Z3.png',
+'thumb4.jpg_S3.png_Z4.png': 'result_thumb4_S3_Z4.png',
+'thumb4.jpg_S3.png_Z5.png': 'result_thumb4_S3_Z5.png',
+'thumb4.jpg_S3.png_Z6.png': 'result_thumb4_S3_Z6.png',
+'thumb4.jpg_S4.png_Z7.png': 'result_thumb4_S4_Z7.png',
+'thumb4.jpg_S4.png_Z2.png': 'result_thumb4_S4_Z2.png',
+'thumb4.jpg_S4.png_Z3.png': 'result_thumb4_S4_Z3.png',
+'thumb4.jpg_S4.png_Z4.png': 'result_thumb4_S4_Z4.png',
+'thumb4.jpg_S4.png_Z5.png': 'result_thumb4_S4_Z5.png',
+'thumb4.jpg_S4.png_Z6.png': 'result_thumb4_S4_Z6.png',
+'thumb4.jpg_S5.png_Z7.png': 'result_thumb4_S5_Z7.png',
+'thumb4.jpg_S5.png_Z2.png': 'result_thumb4_S5_Z2.png',
+'thumb4.jpg_S5.png_Z3.png': 'result_thumb4_S5_Z3.png',
+'thumb4.jpg_S5.png_Z4.png': 'result_thumb4_S5_Z4.png',
+'thumb4.jpg_S5.png_Z5.png': 'result_thumb4_S5_Z5.png',
+'thumb4.jpg_S5.png_Z6.png': 'result_thumb4_S5_Z6.png',
+'thumb4.jpg_S6.png_Z7.png': 'result_thumb4_S6_Z7.png',
+'thumb4.jpg_S6.png_Z2.png': 'result_thumb4_S6_Z2.png',
+'thumb4.jpg_S6.png_Z3.png': 'result_thumb4_S6_Z3.png',
+'thumb4.jpg_S6.png_Z4.png': 'result_thumb4_S6_Z4.png',
+'thumb4.jpg_S6.png_Z5.png': 'result_thumb4_S6_Z5.png',
+'thumb4.jpg_S6.png_Z6.png': 'result_thumb4_S6_Z6.png',
+
+'thumb5.png_S1.png_Z7.png': 'result_thumb5_S1_Z7.png',
+'thumb5.png_S1.png_Z2.png': 'result_thumb5_S1_Z2.png',
+'thumb5.png_S1.png_Z3.png': 'result_thumb5_S1_Z3.png',
+'thumb5.png_S1.png_Z4.png': 'result_thumb5_S1_Z4.png',
+'thumb5.png_S1.png_Z5.png': 'result_thumb5_S1_Z5.png',
+'thumb5.png_S1.png_Z6.png': 'result_thumb5_S1_Z6.png',
+'thumb5.png_S2.png_Z7.png': 'result_thumb5_S2_Z7.png',
+'thumb5.png_S2.png_Z2.png': 'result_thumb5_S2_Z2.png',
+'thumb5.png_S2.png_Z3.png': 'result_thumb5_S2_Z3.png',
+'thumb5.png_S2.png_Z4.png': 'result_thumb5_S2_Z4.png',
+'thumb5.png_S2.png_Z5.png': 'result_thumb5_S2_Z5.png',
+'thumb5.png_S2.png_Z6.png': 'result_thumb5_S2_Z6.png',
+'thumb5.png_S3.png_Z7.png': 'result_thumb5_S3_Z7.png',
+'thumb5.png_S3.png_Z2.png': 'result_thumb5_S3_Z2.png',
+'thumb5.png_S3.png_Z3.png': 'result_thumb5_S3_Z3.png',
+'thumb5.png_S3.png_Z4.png': 'result_thumb5_S3_Z4.png',
+'thumb5.png_S3.png_Z5.png': 'result_thumb5_S3_Z5.png',
+'thumb5.png_S3.png_Z6.png': 'result_thumb5_S3_Z6.png',
+'thumb5.png_S4.png_Z7.png': 'result_thumb5_S4_Z7.png',
+'thumb5.png_S4.png_Z2.png': 'result_thumb5_S4_Z2.png',
+'thumb5.png_S4.png_Z3.png': 'result_thumb5_S4_Z3.png',
+'thumb5.png_S4.png_Z4.png': 'result_thumb5_S4_Z4.png',
+'thumb5.png_S4.png_Z5.png': 'result_thumb5_S4_Z5.png',
+'thumb5.png_S4.png_Z6.png': 'result_thumb5_S4_Z6.png',
+'thumb5.png_S5.png_Z7.png': 'result_thumb5_S5_Z7.png',
+'thumb5.png_S5.png_Z2.png': 'result_thumb5_S5_Z2.png',
+'thumb5.png_S5.png_Z3.png': 'result_thumb5_S5_Z3.png',
+'thumb5.png_S5.png_Z4.png': 'result_thumb5_S5_Z4.png',
+'thumb5.png_S5.png_Z5.png': 'result_thumb5_S5_Z5.png',
+'thumb5.png_S5.png_Z6.png': 'result_thumb5_S5_Z6.png',
+'thumb5.png_S6.png_Z7.png': 'result_thumb5_S6_Z7.png',
+'thumb5.png_S6.png_Z2.png': 'result_thumb5_S6_Z2.png',
+'thumb5.png_S6.png_Z3.png': 'result_thumb5_S6_Z3.png',
+'thumb5.png_S6.png_Z4.png': 'result_thumb5_S6_Z4.png',
+'thumb5.png_S6.png_Z5.png': 'result_thumb5_S6_Z5.png',
+'thumb5.png_S6.png_Z6.png': 'result_thumb5_S6_Z6.png',
+
+'thumb6.png_S1.png_Z7.png': 'result_thumb6_S1_Z7.png',
+'thumb6.png_S1.png_Z2.png': 'result_thumb6_S1_Z2.png',
+'thumb6.png_S1.png_Z3.png': 'result_thumb6_S1_Z3.png',
+'thumb6.png_S1.png_Z4.png': 'result_thumb6_S1_Z4.png',
+'thumb6.png_S1.png_Z5.png': 'result_thumb6_S1_Z5.png',
+'thumb6.png_S1.png_Z6.png': 'result_thumb6_S1_Z6.png',
+'thumb6.png_S2.png_Z7.png': 'result_thumb6_S2_Z7.png',
+'thumb6.png_S2.png_Z2.png': 'result_thumb6_S2_Z2.png',
+'thumb6.png_S2.png_Z3.png': 'result_thumb6_S2_Z3.png',
+'thumb6.png_S2.png_Z4.png': 'result_thumb6_S2_Z4.png',
+'thumb6.png_S2.png_Z5.png': 'result_thumb6_S2_Z5.png',
+'thumb6.png_S2.png_Z6.png': 'result_thumb6_S2_Z6.png',
+'thumb6.png_S3.png_Z7.png': 'result_thumb6_S3_Z7.png',
+'thumb6.png_S3.png_Z2.png': 'result_thumb6_S3_Z2.png',
+'thumb6.png_S3.png_Z3.png': 'result_thumb6_S3_Z3.png',
+'thumb6.png_S3.png_Z4.png': 'result_thumb6_S3_Z4.png',
+'thumb6.png_S3.png_Z5.png': 'result_thumb6_S3_Z5.png',
+'thumb6.png_S3.png_Z6.png': 'result_thumb6_S3_Z6.png',
+'thumb6.png_S4.png_Z7.png': 'result_thumb6_S4_Z7.png',
+'thumb6.png_S4.png_Z2.png': 'result_thumb6_S4_Z2.png',
+'thumb6.png_S4.png_Z3.png': 'result_thumb6_S4_Z3.png',
+'thumb6.png_S4.png_Z4.png': 'result_thumb6_S4_Z4.png',
+'thumb6.png_S4.png_Z5.png': 'result_thumb6_S4_Z5.png',
+'thumb6.png_S4.png_Z6.png': 'result_thumb6_S4_Z6.png',
+'thumb6.png_S5.png_Z7.png': 'result_thumb6_S5_Z7.png',
+'thumb6.png_S5.png_Z2.png': 'result_thumb6_S5_Z2.png',
+'thumb6.png_S5.png_Z3.png': 'result_thumb6_S5_Z3.png',
+'thumb6.png_S5.png_Z4.png': 'result_thumb6_S5_Z4.png',
+'thumb6.png_S5.png_Z5.png': 'result_thumb6_S5_Z5.png',
+'thumb6.png_S5.png_Z6.png': 'result_thumb6_S5_Z6.png',
+'thumb6.png_S6.png_Z7.png': 'result_thumb6_S6_Z7.png',
+'thumb6.png_S6.png_Z2.png': 'result_thumb6_S6_Z2.png',
+'thumb6.png_S6.png_Z3.png': 'result_thumb6_S6_Z3.png',
+'thumb6.png_S6.png_Z4.png': 'result_thumb6_S6_Z4.png',
+'thumb6.png_S6.png_Z5.png': 'result_thumb6_S6_Z5.png',
+'thumb6.png_S6.png_Z6.png': 'result_thumb6_S6_Z6.png',
+      // ... 继续添加 ...
     };
 
+    // ==================== 3. 音效 ====================
     function playSuccessSound() {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
-
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 880;
-
-      gainNode.gain.setValueAtTime(0, ctx.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-
-      oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.3);
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = 880;
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      o.start(); o.stop(ctx.currentTime + 0.3);
     }
 
-    plusBtn.addEventListener('click', () => {
-      if (hasTriangleRow) return;
-      hasTriangleRow = true;
-      plusBtn.style.display = 'none';
+    // ==================== 4. + 按钮创建三角行 ====================
+ // ==================== 4. + 按钮创建三角行（插入到中间） ====================
+plusBtn.addEventListener('click', () => {
+  if (hasTriangleRow) return;
+  hasTriangleRow = true;
 
-      const triangleRow = document.createElement('div');
-      triangleRow.className = 'row';
-      triangleRow.innerHTML = `
-        <div class="left">
-          <div class="category-btn" data-category="2">点击显示<br>三角形组图</div>
-        </div>
-        <div class="right" data-category="2">
-          <div class="thumb-grid">
-            <div class="thumb category2" data-src="S1.png" data-category="2" draggable="true"><img src="S1.png"></div>
-            <div class="thumb category2" data-src="S2.png" data-category="2" draggable="true"><img src="S2.png"></div>
-            <div class="thumb category2" data-src="S3.png" data-category="2" draggable="true"><img src="S3.png"></div>
-            <div class="thumb category2" data-src="S4.png" data-category="2" draggable="true"><img src="S4.png"></div>
-            <div class="thumb category2" data-src="S5.png" data-category="2" draggable="true"><img src="S5.png"></div>
-            <div class="thumb category2" data-src="S6.png" data-category="2" draggable="true"><img src="S6.png"></div>
-          </div>
-        </div>
-      `;
+  // 1. 创建三角形行
+  const triangleRow = document.createElement('div');
+  triangleRow.className = 'row';
+  triangleRow.innerHTML = `
+    <div class="left">
+      <div class="category-btn" data-category="2"></div>
+    </div>
+    <div class="right" data-category="2">
+      <div class="thumb-grid">
+        <div class="thumb category2" data-src="S1.png" data-category="2" draggable="true"><img src="S1.png"></div>
+        <div class="thumb category2" data-src="S2.png" data-category="2" draggable="true"><img src="S2.png"></div>
+        <div class="thumb category2" data-src="S3.png" data-category="2" draggable="true"><img src="S3.png"></div>
+        <div class="thumb category2" data-src="S4.png" data-category="2" draggable="true"><img src="S4.png"></div>
+        <div class="thumb category2" data-src="S5.png" data-category="2" draggable="true"><img src="S5.png"></div>
+        <div class="thumb category2" data-src="S6.png" data-category="2" draggable="true"><img src="S6.png"></div>
+      </div>
+    </div>
+  `;
 
-      plusBtn.parentNode.insertBefore(triangleRow, plusBtn.nextSibling);
+  // 2. 插入到 正方形行 之前
+  const squareRow = document.getElementById('rowSquare');
+  squareRow.parentNode.insertBefore(triangleRow, squareRow);
 
-      const triangleBtn = triangleRow.querySelector('.category-btn');
-      initCategoryBtn(triangleBtn);
-      triangleRow.querySelectorAll('.thumb').forEach(thumb => initThumbDrag(thumb));
+  // 3. 移除 + 按钮（不再显示）
+  plusBtn.remove();
 
-      comboTrack.classList.add('three');
-      comboItems[2].classList.remove('hidden');
-      initDropZones();
-    });
+  // 4. 初始化三角行的按钮和拖拽
+  initCategoryBtn(triangleRow.querySelector('.category-btn'));
+  triangleRow.querySelectorAll('.thumb').forEach(initThumbDrag);
 
+  // 5. 开启三格模式
+  comboTrack.classList.add('three');
+  comboItems[2].classList.remove('hidden');
+
+  // 6. 刷新拖拽区（你原来的逻辑）
+  refreshDropZones();
+});
+
+    // ==================== 5. 缩略图拖拽初始化 ====================
     function initThumbDrag(thumb) {
       const img = thumb.querySelector('img');
-      img.src = getImageUrl(img.src.split('/').pop());
-      
+      const filename = img.getAttribute('src');               // 只写文件名
+      img.src = getImageUrl(filename);
+      thumb.dataset.src = filename;                           // 统一用 data-src
+
       thumb.addEventListener('dragstart', e => {
         e.dataTransfer.setData('text/plain', JSON.stringify({
           src: thumb.dataset.src,
@@ -504,10 +731,10 @@
       });
       thumb.addEventListener('dragend', () => {
         thumb.classList.remove('dragging');
-        comboItems.forEach(item => item.classList.remove('drag-over'));
       });
     }
 
+    // ==================== 6. 分类按钮展开/收起 ====================
     function initCategoryBtn(btn) {
       btn.addEventListener('click', () => {
         const cat = btn.dataset.category;
@@ -517,125 +744,114 @@
       });
     }
 
-    function initDropZones() {
-      comboItems.forEach((item, i) => {
-        const newItem = item.cloneNode(true);
-        item.parentNode.replaceChild(newItem, item);
-      });
-      comboItems = Array.from(document.querySelectorAll('.combo-item'));
+    // ==================== 7. 拖拽目标区（修复版：不 clone，只清除事件） ====================
+let dragHandlers = {}; // 存储事件处理器，方便移除
 
-      // 为组合框整体添加拖拽事件监听
-      comboTrack.addEventListener('dragover', e => {
-        e.preventDefault();
-        const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-        const category = parseInt(data.cat);
-        
-        // 检查该类型是否已存在且可以拖放
-        if ((category === 1 && images[0] !== null) || 
-            (category === 2 && images[1] !== null) ||
-            (category === 3 && images[2] !== null)) {
-          comboItems.forEach(item => item.classList.remove('drag-over'));
-          return;
-        }
-        
-        // 为所有空位置添加拖拽样式
-        comboItems.forEach((item, index) => {
-          if (images[index] === null) {
-            item.classList.add('drag-over');
-          } else {
-            item.classList.remove('drag-over');
-          }
-        });
-      });
+function refreshDropZones() {
+  if (dragHandlers.over) comboTrack.removeEventListener('dragover', dragHandlers.over);
+  if (dragHandlers.leave) comboTrack.removeEventListener('dragleave', dragHandlers.leave);
+  if (dragHandlers.drop) comboTrack.removeEventListener('drop', dragHandlers.drop);
 
-      comboTrack.addEventListener('dragleave', () => {
-        comboItems.forEach(item => item.classList.remove('drag-over'));
-      });
+  comboItems = Array.from(comboTrack.querySelectorAll('.combo-item'));
 
-      comboTrack.addEventListener('drop', e => {
-        e.preventDefault();
-        comboItems.forEach(item => item.classList.remove('drag-over'));
-        
-        const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-        const category = parseInt(data.cat);
-        let targetIndex = -1;
-        
-        // 根据类型自动分配位置
-        if (category === 1) {
-          targetIndex = 0; // 圆形固定在第一个位置
-        } else if (category === 2) {
-          targetIndex = 1; // 三角形固定在第二个位置
-        } else if (category === 3) {
-          targetIndex = 2; // 正方形固定在第三个位置
-        }
-        
-        // 检查目标位置是否可用
-        if (targetIndex !== -1 && images[targetIndex] === null) {
-          const fullSrc = getImageUrl(data.src);
-          images[targetIndex] = fullSrc;
-          comboItems[targetIndex].innerHTML = `<img src="${fullSrc}" alt="">`;
-          updateUI();
-          playSuccessSound();
-        }
-      });
+  dragHandlers.over = (e) => {
+    e.preventDefault();
+    const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+    const cat = parseInt(data.cat, 10);
+
+    if ((cat === 1 && images[0]) || (cat === 2 && images[1]) || (cat === 3 && images[2])) {
+      comboItems.forEach(it => it.classList.remove('drag-over'));
+      return;
     }
 
-    resetBtn.addEventListener('click', () => {
-      images = [null, null, null];
-      comboItems.forEach(item => {
-        item.innerHTML = '';
-        item.classList.remove('drag-over');
-      });
-      resultOverlay.classList.remove('show');
-      resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
+    comboItems.forEach((it, idx) => {
+      it.classList.toggle('drag-over', images[idx] === null);
+    });
+  };
+
+  dragHandlers.leave = () => {
+    comboItems.forEach(it => it.classList.remove('drag-over'));
+  };
+
+  dragHandlers.drop = (e) => {
+    e.preventDefault();
+    comboItems.forEach(it => it.classList.remove('drag-over'));
+
+    const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+    const cat = parseInt(data.cat, 10);
+    let targetIdx = -1;
+    if (cat === 1) targetIdx = 0;
+    else if (cat === 2) targetIdx = 1;
+    else if (cat === 3) targetIdx = 2;
+
+    if (targetIdx !== -1 && images[targetIdx] === null) {
+      const full = getImageUrl(data.src);
+      images[targetIdx] = full;
+      comboItems[targetIdx].innerHTML = `<img src="${full}" alt="">`;
       updateUI();
-      initDropZones();
-    });
+      playSuccessSound();
+    }
+  };
 
+  comboTrack.addEventListener('dragover', dragHandlers.over);
+  comboTrack.addEventListener('dragleave', dragHandlers.leave);
+  comboTrack.addEventListener('drop', dragHandlers.drop);
+}
+// ==================== 8. 重置（修复版） ====================
+resetBtn.addEventListener('click', () => {
+  images = [null, null, null];
+  
+  // 重新获取最新的 comboItems
+  comboItems = Array.from(comboTrack.querySelectorAll('.combo-item'));
+  
+  comboItems.forEach(it => it.innerHTML = '');
+  resultOverlay.classList.remove('show');
+  resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
+  updateUI();
+  
+  // 重新绑定拖拽事件
+  refreshDropZones();
+});
+
+    // ==================== 9. UI 状态 ====================
     function updateUI() {
-      const hasImages = images.some(img => img !== null);
-      resetBtn.classList.toggle('visible', hasImages);
+      const any = images.some(i => i);
+      resetBtn.classList.toggle('visible', any);
+      fusionBtn.disabled = images.filter(i => i).length < 2;
     }
 
-    // AI 融合生成按钮功能
-    fusionBtn.addEventListener('click', () => {
-      // 检查是否至少有2张图片
-      const filledImages = images.filter(img => img !== null);
-      if (filledImages.length < 2) {
-        alert('请至少拖入 2 张图片才能进行融合！');
-        return;
-      }
+   // ==================== 10. AI 融合按钮 ====================
+fusionBtn.addEventListener('click', () => {
+  const filled = images.filter(i => i);
+  if (filled.length < 2) {
+    alert('请至少拖入 2 张图片才能进行融合！');
+    return;
+  }
 
-      // 显示加载状态
-      resultOverlay.classList.add('show');
-      resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
-      fusionBtn.disabled = true;
+  // 构造 key（按顺序：圆 → 三角 → 方）
+  const keyParts = [];
+  if (images[0]) keyParts.push(images[0].split('/').pop());
+  if (images[1]) keyParts.push(images[1].split('/').pop());
+  if (images[2]) keyParts.push(images[2].split('/').pop());
+  const key = keyParts.join('_');
 
-      // 获取组合的图片名称（提取文件名）
-      const imgNames = filledImages.map(img => img.split('/').pop());
-      // 排序确保圆形在前，正方形在后（保持键名一致性）
-      imgNames.sort((a, b) => {
-        const isCircle1 = a.startsWith('thumb');
-        const isCircle2 = b.startsWith('thumb');
-        if (isCircle1 && !isCircle2) return -1;
-        if (!isCircle1 && isCircle2) return 1;
-        return 0;
-      });
-      const comboKey = `${imgNames[0]}_${imgNames[1]}`;
+  resultOverlay.classList.add('show');
+  resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
+  fusionBtn.disabled = true;
 
-      // 模拟加载过程，2秒后显示对应融合结果
-      setTimeout(() => {
-        const resultFilename = fusionMap[comboKey] || 'result.png';
-        const resultImage = getImageUrl(resultFilename);
-        resultOverlay.innerHTML = `<img src="${resultImage}" alt="融合结果">`;
-        fusionBtn.disabled = false;
-      }, 2000);
-    });
+  setTimeout(() => {
+    const resultFile = fusionMap[key] || 'result.png';
+    resultOverlay.innerHTML = `<img src="${getImageUrl(resultFile)}" alt="融合结果">`;
+    fusionBtn.disabled = false;
 
-    // 初始化
+    // 融合成功播放音效
+    playSuccessSound();
+  }, 2000);
+});
+    // ==================== 11. 初始化 ====================
     document.querySelectorAll('.thumb').forEach(initThumbDrag);
     document.querySelectorAll('.category-btn').forEach(initCategoryBtn);
-    initDropZones();
+    refreshDropZones();
     updateUI();
   </script>
 </body>
