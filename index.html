@@ -10,6 +10,7 @@
       --grass-green:#90ee90;
       --highlight:#ff6b6b;
       --cancel:#6c757d;
+      --combo-bg: #FFFACD;   /* 鹅黄色 */
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body{
@@ -44,20 +45,20 @@
     .cloud2::before { width:50px; height:50px; top:-25px; left:15px; }
     .cloud3::before { width:55px; height:55px; top:-28px; left:25px; }
 
-  .container {
-  width: 95%;
-  max-width: 1200px;
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-  margin: 0 auto;                    /* 水平居中 */
-  min-height: 100vh;                 /* 占满高度 */
-  justify-content: center;           /* 垂直居中 */
-  align-items: center;               /* 子元素水平居中 */
-  padding: 40px 20px;                /* 上下留白 */
-}
+    .container {
+      width: 95%;
+      max-width: 1200px;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      margin: 0 auto;
+      min-height: 100vh;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+    }
 
     .controls {
       text-align: center;
@@ -77,94 +78,61 @@
     .reset-btn.visible { display: inline-block; }
     .reset-btn:hover { background: #5a6268; }
 
-.row {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  position: relative;
-  justify-content: center;     /* 新增：水平居中 */
-  flex-wrap: wrap;             /* 响应式换行 */
-}
+    .row {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      position: relative;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
     #row1 {
       margin-top: -5px;
     }
 
-    .plus-btn {
-      width: 60px;
-      height: 60px;
-      background: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      font-weight: bold;
-      color: var(--highlight);
-      cursor: pointer;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-      z-index: 15;
-      transition: all 0.3s ease;
-      margin-left: 0;
-      align-self: flex-start;
-    }
-    .plus-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 10px 24px rgba(0,0,0,0.25);
-    }
+  .plus-btn {
+  position: absolute;
+  top: 80px;           /* 距离顶部 */
+  left: 30px;          /* 距离左侧 */
+  width: 60px;
+  height: 60px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--highlight);
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  z-index: 25;         /* 高于云朵 */
+  transition: all 0.3s ease;
+}
 
-    .category-btn {
-      width:120px;
-      height:120px;
-      background:white;
-      border-radius:50%;
-      border:4px solid #333;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      box-shadow:0 6px 15px rgba(0,0,0,0.15);
-      font-size:16px;
-      color:#333;
-      font-weight:600;
-      padding:10px;
-      text-align:center;
-      user-select:none;
-      transition: all 0.2s;
-    }
-    .category-btn[data-category="2"] {
-      border-radius: 0;
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-      width: 140px;
-      height: 140px;
-    }
-    .category-btn[data-category="3"] {
-      border-radius: 0;
-      width: 130px;
-      height: 130px;
-    }
-    .category-btn:hover { 
-      transform:scale(1.08);
-      box-shadow:0 8px 20px rgba(0,0,0,0.2);
-      border-color:var(--highlight);
-    }
-    .category-btn.active {
-      border-color:var(--highlight);
-      background: rgba(255, 107, 107, 0.1);
-    }
+.plus-btn:hover {
+  transform: scale(1.15);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.3);
+}
 
+/* 小屏幕适配 */
+@media (max-width: 900px) {
+  .plus-btn {
+    top: 60px;
+    left: 15px;
+    width: 50px;
+    height: 50px;
+    font-size: 28px;
+  }
+}
     .right {
       flex:1;
       display:flex;
       gap:12px;
-      transform: translateX(30px);
-      opacity:0;
-      pointer-events:none;
+      transform: translateX(0) !important;
+      opacity:1 !important;
+      pointer-events:auto !important;
       transition: all .35s ease;
-    }
-    .right.show {
-      transform: translateX(0);
-      opacity:1;
-      pointer-events:auto;
     }
 
     .thumb-grid{ display:flex; gap:12px; flex-wrap:wrap; }
@@ -190,20 +158,20 @@
       width: 100%;
       max-width: 900px;
       height: 140px;
-      background: var(--grass-green);
+      background: var(--combo-bg);
       border-radius: 20px;
       margin: 30px auto 0; 
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 40px;
+      gap:5px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
       position: relative;
       z-index: 10;
       transition: gap 0.3s ease;
     }
     .combo-track.three {
-      gap: 30px;
+      gap: 5px;
     }
 
     .combo-item {
@@ -215,39 +183,37 @@
       justify-content: center;
       transition: transform 0.3s ease;
     }
-    .combo-item.hidden {
-      display: none;
-    }
-    .combo-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      border-radius: 12px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-    }
+   .combo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  border: 4px solid #333;        /* 新增：实线边框 */
+  background: #fff;              /* 新增：填充背景 */
+}
     .combo-item.drag-over {
       transform: scale(1.08);
     }
-
-    /* 右侧结果遮罩 */
-    .result-overlay {
-      position: absolute;
-      right: 0;
-      top: 0;
-      width: 140px;
-      height: 140px;
-      background: rgba(255,255,255,0.95);
-      border-radius: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      z-index: 20;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
+.result-overlay {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 140px;
+  height: 140px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
     .result-overlay.show {
       opacity: 1;
       pointer-events: auto;
@@ -274,14 +240,144 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(255,107,107,0.4);
+      /* border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(255,107,107,0.4); */
     }
 
     .generate-section {
       margin-top: 35px;
       text-align: center;
     }
+.plus-sign {
+  width: 120px;        /* 原 140px → 120px */
+  height: 120px;
+  position: relative;
+  pointer-events: none;
+  user-select: none;
+  margin: 0;
+  z-index: 5;
+}
+
+/* 删除原来的 .plus-btn 样式，替换为以下 */
+
+.cloud-btn {
+  position: absolute;
+  top: 70px;
+  left: 25px;
+  width: 90px;
+  height: 50px;
+  background: white;
+  border-radius: 50px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 25;
+  transition: all 0.3s ease;
+  opacity: 0.95;
+  user-select: none;
+}
+
+.cloud-btn::before,
+.cloud-btn::after {
+  content: '';
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+}
+
+.cloud-btn::before {
+  width: 50px;
+  height: 50px;
+  top: -25px;
+  left: 15px;
+}
+
+.cloud-btn::after {
+  width: 35px;
+  height: 35px;
+  top: -15px;
+  right: 15px;
+}
+
+.plus-icon {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--highlight);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 悬停效果 */
+.cloud-btn:hover {
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.28);
+  opacity: 1;
+}
+
+/* 小屏幕适配 */
+@media (max-width: 900px) {
+  .cloud-btn {
+    top: 55px;
+    left: 15px;
+    width: 75px;
+    height: 42px;
+  }
+  .cloud-btn::before {
+    width: 42px; height: 42px; top: -21px; left: 12px;
+  }
+  .cloud-btn::after {
+    width: 30px; height: 30px; top: -13px; right: 12px;
+  }
+  .plus-icon {
+    font-size: 24px;
+  }
+}
+
+/* 横线 */
+.plus-sign::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 12px;        /* 微调对齐 */
+  right: 12px;
+  height: 18px;      /* 稍细一点 */
+  background: #000;
+  transform: translateY(-50%);
+}
+
+/* 竖线 */
+.plus-sign::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  bottom: 12px;
+  width: 18px;
+  background: #000;
+  transform: translateX(-50%);
+}
+@media(max-width:900px) {
+  .combo-track {
+    gap: 12px;         /* 原 20px → 12px */
+  }
+  .plus-sign {
+    width: 100px;
+    height: 100px;
+    margin: 0;         /* 移除 margin */
+  }
+  .plus-sign::before {
+    left: 10px;
+    right: 10px;
+    height: 16px;
+  }
+  .plus-sign::after {
+    top: 10px;
+    bottom: 10px;
+    width: 16px;
+  }
+}
     .generate-btn {
       background: linear-gradient(135deg, #ff6b6b, #feca57);
       color: white;
@@ -300,11 +396,80 @@
     @media(max-width:900px){
       .container{ gap:25px; margin-top: -5px; }
       .row{ flex-wrap:wrap; justify-content:center; }
-      .left{ width:100%; justify-content:center; margin-bottom:10px; } 
       .right{ width:100%; justify-content:center; }
       .combo-track { height: 110px; gap: 20px; margin-top: 20px; }
       .combo-item { width: 80px; height: 80px; }
       .result-overlay { width: 100px; height: 100px; }
+    }
+
+    .combo-item .placeholder {
+      width: 100%; height: 100%; background: #fff; border: 4px solid #333;
+      border-radius: 12px; transition: all 0.3s ease;
+    }
+    .combo-item .placeholder.circle { border-radius: 50%; }
+    .combo-item .placeholder.square { border-radius: 0; }
+    .combo-item .placeholder.triangle {
+  position: relative;
+  background: #fff;
+  overflow: visible;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  border: none;
+  border-radius: 0;
+}
+.combo-item .placeholder.triangle::before {
+  content: '';
+  position: absolute;
+inset: 4px;
+  border: 4px solid #333;
+  clip-path: inset(4px) polygon(50% 0%, 0% 100%, 100% 100%);
+  z-index: -1;
+  background: transparent;   /* 关键！让边框可见 */
+}
+.combo-track.complete-flash {
+      animation: completeBreathe 1.8s ease-in-out infinite;
+    }
+
+    @keyframes completeBreathe {
+      0% {
+        filter: brightness(1) drop-shadow(0 0 0 rgba(255, 107, 107, 0));
+        transform: scale(1);
+      }
+      50% {
+        filter: brightness(1.35) drop-shadow(0 0 40px rgba(255, 107, 107, 0.7));
+        transform: scale(1.03);
+      }
+      100% {
+        filter: brightness(1) drop-shadow(0 0 0 rgba(255, 107, 107, 0));
+        transform: scale(1);
+      }
+    }
+
+/* 三角形图片：也用 ::before 画边框 */
+.combo-item img.triangle {
+  position: relative;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  border: none !important;      /* 移除原 border */
+  z-index: 1;
+  background: #fff; /* 新增：填充白色背景 */
+}
+.combo-item img.triangle::before {
+  content: '';
+  position: absolute;
+inset: 4px;
+  border: 4px solid #333;
+ clip-path:polygon(50% 0%, 0% 100%, 100% 100%);  /* 移除 inset(4px) */
+  z-index: -1;
+  pointer-events: none;
+  background: transparent;   /* 关键！让边框可见 */
+}
+
+    .combo-item img.circle { border-radius: 50% !important; object-fit: cover; }
+    .combo-item img.square { border-radius: 0 !important; }
+    .combo-item img.triangle { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border-radius: 0 !important; }
+
+    .combo-item.drag-over .placeholder {
+      border-color: var(--highlight);
+      background: rgba(255, 107, 107, 0.1);
     }
   </style>
 </head>
@@ -317,12 +482,13 @@
     <div class="controls">
       <button class="reset-btn" id="resetBtn">重置组合</button>
     </div>
+ <div class="cloud-btn" id="plusBtn">
+  <span class="plus-icon"></span>
+</div>
 
     <!-- 第一行：圆形 -->
     <div class="row" id="row1">
-      <div class="left">
-        <div class="category-btn" data-category="1"></div>
-      </div>
+      <div class="left"></div>
       <div class="right" data-category="1">
         <div class="thumb-grid">
           <div class="thumb" data-src="thumb1.png" data-category="1" draggable="true"><img src="thumb1.png"></div>
@@ -335,14 +501,11 @@
       </div>
     </div>
 
-    <!-- + 按钮（放在圆形和正方形中间） -->
-    <div class="plus-btn" id="plusBtn">+</div>
+
 
     <!-- 初始正方形行 -->
     <div class="row" id="rowSquare">
-      <div class="left">
-        <div class="category-btn" data-category="3"></div>
-      </div>
+      <div class="left"></div>
       <div class="right" data-category="3">
         <div class="thumb-grid">
           <div class="thumb category3" data-src="Z7.png" data-category="3" draggable="true"><img src="Z7.png"></div>
@@ -355,15 +518,14 @@
       </div>
     </div>
 
-    <!-- 三角形行将在 + 按钮后面（中间）动态插入 -->
+    <!-- 三角形行容器（动态插入） -->
     <div id="triangleRowContainer"></div>
 
-    <!-- 组合框 -->
+    <!-- 组合框：初始只显示圆 + 正方形 -->
     <div class="combo-track" id="comboTrack">
-      <div class="combo-item" data-index="0"></div>
-      <div class="combo-item" data-index="1"></div>
-      <div class="combo-item" data-index="2" class="hidden"></div>
-      <!-- 右侧结果遮罩 -->
+      <div class="combo-item" data-index="0"><div class="placeholder circle"></div></div>
+      <div class="combo-item" data-index="1"><div class="placeholder square"></div></div>
+      <!-- 第三个由 JS 动态插入 -->
       <div class="result-overlay" id="resultOverlay">
         <div class="spinner"></div>
         <div class="text">融合中…</div>
@@ -390,6 +552,7 @@
     let comboItems = Array.from(document.querySelectorAll('.combo-item'));
     let images = [null, null, null];               // [圆, 三角, 方]
     let hasTriangleRow = false;
+ let keepFlashing = false;   // 控制持续闪烁
 
     // ==================== 2. 融合映射（支持 2/3 张） ====================
     const fusionMap = {
@@ -658,7 +821,7 @@
       // ... 继续添加 ...
     };
 
-    // ==================== 3. 音效 ====================
+  // ==================== 3. 音效 ====================
     function playSuccessSound() {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const o = ctx.createOscillator();
@@ -670,20 +833,39 @@
       g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
       o.start(); o.stop(ctx.currentTime + 0.3);
     }
+    // ==================== 新增：检测是否填满并开启/关闭闪烁 ====================
+    function checkAndTriggerCompleteFlash() {
+      const totalSlots = hasTriangleRow ? 3 : 2;
+      const filledCount = images.slice(0, totalSlots).filter(img => img !== null).length;
 
-    // ==================== 4. + 按钮创建三角行 ====================
- // ==================== 4. + 按钮创建三角行（插入到中间） ====================
-plusBtn.addEventListener('click', () => {
+      if (filledCount === totalSlots && !keepFlashing) {
+        keepFlashing = true;
+        comboTrack.classList.add('complete-flash');
+      } else if (filledCount < totalSlots && keepFlashing) {
+        stopCompleteFlash();  // 只要有空位就立刻停止
+      }
+    }
+
+    // ==================== 4. + 按钮：插入三角行 + 动态添加三角 combo-item ====================
+    plusBtn.addEventListener('click', () => {
   if (hasTriangleRow) return;
   hasTriangleRow = true;
+  // === 1. 清空组合框（包括融合结果）===
+  images = [null, null, null];
+  comboItems = Array.from(comboTrack.querySelectorAll('.combo-item'));
+  comboItems.forEach((it, i) => {
+    if (i === 0) it.innerHTML = `<div class="placeholder circle"></div>`;
+    else if (i === 1) it.innerHTML = `<div class="placeholder square"></div>`;
+  });
+  resultOverlay.classList.remove('show');
+  resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
+  updateUI();
 
-  // 1. 创建三角形行
+  // === 1. 创建三角形行 ===
   const triangleRow = document.createElement('div');
   triangleRow.className = 'row';
   triangleRow.innerHTML = `
-    <div class="left">
-      <div class="category-btn" data-category="2"></div>
-    </div>
+    <div class="left"></div>
     <div class="right" data-category="2">
       <div class="thumb-grid">
         <div class="thumb category2" data-src="S1.png" data-category="2" draggable="true"><img src="S1.png"></div>
@@ -696,31 +878,35 @@ plusBtn.addEventListener('click', () => {
     </div>
   `;
 
-  // 2. 插入到 正方形行 之前
   const squareRow = document.getElementById('rowSquare');
   squareRow.parentNode.insertBefore(triangleRow, squareRow);
-
-  // 3. 移除 + 按钮（不再显示）
   plusBtn.remove();
 
-  // 4. 初始化三角行的按钮和拖拽
-  initCategoryBtn(triangleRow.querySelector('.category-btn'));
   triangleRow.querySelectorAll('.thumb').forEach(initThumbDrag);
 
-  // 5. 开启三格模式
-  comboTrack.classList.add('three');
-  comboItems[2].classList.remove('hidden');
+  // === 2. 动态插入三角 combo-item 到 正方形之前 ===
+  const triangleCombo = document.createElement('div');
+  triangleCombo.className = 'combo-item';
+  triangleCombo.dataset.index = '1';
+  triangleCombo.innerHTML = `<div class="placeholder triangle"></div>`;
 
-  // 6. 刷新拖拽区（你原来的逻辑）
+  const squareCombo = comboTrack.querySelector('.combo-item[data-index="1"]');
+  comboTrack.insertBefore(triangleCombo, squareCombo);
+
+  // 更新原正方形 index 为 2
+  squareCombo.dataset.index = '2';
+
+  // === 3. 开启三列模式 ===
+  comboTrack.classList.add('three');
+
   refreshDropZones();
 });
-
     // ==================== 5. 缩略图拖拽初始化 ====================
     function initThumbDrag(thumb) {
       const img = thumb.querySelector('img');
-      const filename = img.getAttribute('src');               // 只写文件名
+      const filename = img.getAttribute('src');
       img.src = getImageUrl(filename);
-      thumb.dataset.src = filename;                           // 统一用 data-src
+      thumb.dataset.src = filename;
 
       thumb.addEventListener('dragstart', e => {
         e.dataTransfer.setData('text/plain', JSON.stringify({
@@ -733,126 +919,169 @@ plusBtn.addEventListener('click', () => {
         thumb.classList.remove('dragging');
       });
     }
-
-    // ==================== 6. 分类按钮展开/收起 ====================
-    function initCategoryBtn(btn) {
-      btn.addEventListener('click', () => {
-        const cat = btn.dataset.category;
-        const panel = document.querySelector(`.right[data-category="${cat}"]`);
-        panel.classList.toggle('show');
-        btn.classList.toggle('active', panel.classList.contains('show'));
-      });
+    // ==================== 新增：停止闪烁函数 ====================
+    function stopCompleteFlash() {
+      keepFlashing = false;
+      comboTrack.classList.remove('complete-flash');
     }
 
-    // ==================== 7. 拖拽目标区（修复版：不 clone，只清除事件） ====================
-let dragHandlers = {}; // 存储事件处理器，方便移除
+    // ==================== 6. 拖拽目标区 ====================
+    let dragHandlers = {};
 
-function refreshDropZones() {
-  if (dragHandlers.over) comboTrack.removeEventListener('dragover', dragHandlers.over);
-  if (dragHandlers.leave) comboTrack.removeEventListener('dragleave', dragHandlers.leave);
-  if (dragHandlers.drop) comboTrack.removeEventListener('drop', dragHandlers.drop);
+    function refreshDropZones() {
+      // 移除旧事件
+      if (dragHandlers.over) comboTrack.removeEventListener('dragover', dragHandlers.over);
+      if (dragHandlers.leave) comboTrack.removeEventListener('dragleave', dragHandlers.leave);
+      if (dragHandlers.drop) comboTrack.removeEventListener('drop', dragHandlers.drop);
 
-  comboItems = Array.from(comboTrack.querySelectorAll('.combo-item'));
+      // === 新增：插入加号 ===
+  comboTrack.querySelectorAll('.plus-sign').forEach(el => el.remove());
 
-  dragHandlers.over = (e) => {
-    e.preventDefault();
-    const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-    const cat = parseInt(data.cat, 10);
+      // 重新获取
+      comboItems = Array.from(comboTrack.querySelectorAll('.combo-item'));
 
-    if ((cat === 1 && images[0]) || (cat === 2 && images[1]) || (cat === 3 && images[2])) {
-      comboItems.forEach(it => it.classList.remove('drag-over'));
-      return;
+      dragHandlers.over = (e) => {
+        e.preventDefault();
+        const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+        const cat = parseInt(data.cat, 10);
+
+        if ((cat === 1 && images[0]) || (cat === 2 && images[1]) || (cat === 3 && images[2])) {
+          comboItems.forEach(it => it.classList.remove('drag-over'));
+          return;
+        }
+
+        comboItems.forEach((it, idx) => {
+          it.classList.toggle('drag-over', images[idx] === null);
+        });
+      };
+
+      dragHandlers.leave = () => {
+        comboItems.forEach(it => it.classList.remove('drag-over'));
+      };
+dragHandlers.drop = (e) => {
+  e.preventDefault();
+  comboItems.forEach(it => it.classList.remove('drag-over'));
+
+  const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+  const cat = parseInt(data.cat, 10);
+  let targetIdx = -1;
+
+  if (cat === 1) targetIdx = 0;                    // 圆形
+  else if (cat === 2) targetIdx = 1;               // 三角形
+  else if (cat === 3) targetIdx = hasTriangleRow ? 2 : 1;  // 正方形
+
+  if (targetIdx !== -1 && images[targetIdx] === null) {
+    const full = getImageUrl(data.src);
+    images[targetIdx] = full;
+    const shape = cat === 1 ? 'circle' : cat === 2 ? 'triangle' : 'square';
+    comboItems[targetIdx].innerHTML = `<img src="${full}" class="${shape}" alt="">`;
+    
+    updateUI();
+    checkAndTriggerCompleteFlash();
+    playSuccessSound();
+    
+  }
+};
+
+      comboTrack.addEventListener('dragover', dragHandlers.over);
+      comboTrack.addEventListener('dragleave', dragHandlers.leave);
+      comboTrack.addEventListener('drop', dragHandlers.drop);
+
+      // === 插入固定的加号（无论是否拖入图片）===
+  comboTrack.querySelectorAll('.plus-sign').forEach(el => el.remove());
+  const items = comboTrack.querySelectorAll('.combo-item');
+  for (let i = 0; i < items.length - 1; i++) {
+    const plus = document.createElement('div');
+    plus.className = 'plus-sign';
+    // plus.textContent = '+';
+    items[i].after(plus);
+  }
+  // 强制重新定位 result-overlay（防止被遮挡）
+resultOverlay.style.right = '0';
+resultOverlay.style.top = '50%';
+resultOverlay.style.transform = 'translateY(-50%)';
     }
 
-    comboItems.forEach((it, idx) => {
-      it.classList.toggle('drag-over', images[idx] === null);
-    });
-  };
 
-  dragHandlers.leave = () => {
-    comboItems.forEach(it => it.classList.remove('drag-over'));
-  };
+    // ==================== 新增：检查是否全部填满并触发闪烁动画 ====================
+    // function checkAndTriggerCompleteFlash() {
+    //   const totalSlots = hasTriangleRow ? 3 : 2;
+    //   const filledCount = images.slice(0, totalSlots).filter(img => img !== null).length;
 
-  dragHandlers.drop = (e) => {
-    e.preventDefault();
-    comboItems.forEach(it => it.classList.remove('drag-over'));
+    //   if (filledCount === totalSlots && !isAnimating) {
+    //     isAnimating = true;
+    //     comboTrack.classList.add('complete-flash');
+    //     setTimeout(() => {
+    //       comboTrack.classList.remove('complete-flash');
+    //       isAnimating = false;
+    //     }, 1800); // 动画时长
+    //   }
+    // }
 
-    const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-    const cat = parseInt(data.cat, 10);
-    let targetIdx = -1;
-    if (cat === 1) targetIdx = 0;
-    else if (cat === 2) targetIdx = 1;
-    else if (cat === 3) targetIdx = 2;
-
-    if (targetIdx !== -1 && images[targetIdx] === null) {
-      const full = getImageUrl(data.src);
-      images[targetIdx] = full;
-      comboItems[targetIdx].innerHTML = `<img src="${full}" alt="">`;
-      updateUI();
-      playSuccessSound();
-    }
-  };
-
-  comboTrack.addEventListener('dragover', dragHandlers.over);
-  comboTrack.addEventListener('dragleave', dragHandlers.leave);
-  comboTrack.addEventListener('drop', dragHandlers.drop);
-}
-// ==================== 8. 重置（修复版） ====================
-resetBtn.addEventListener('click', () => {
+    // ==================== 7. 重置 ====================
+  resetBtn.addEventListener('click', () => {
   images = [null, null, null];
-  
-  // 重新获取最新的 comboItems
   comboItems = Array.from(comboTrack.querySelectorAll('.combo-item'));
-  
-  comboItems.forEach(it => it.innerHTML = '');
+
+  comboItems.forEach((it, i) => {
+    if (i === 0) {
+      it.innerHTML = `<div class="placeholder circle"></div>`;
+    } else if (i === 1) {
+      it.innerHTML = `<div class="placeholder ${hasTriangleRow ? 'triangle' : 'square'}"></div>`;
+    } else if (i === 2 && hasTriangleRow) {
+      it.innerHTML = `<div class="placeholder square"></div>`;
+    }
+  });
+
   resultOverlay.classList.remove('show');
   resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
   updateUI();
-  
-  // 重新绑定拖拽事件
+  stopCompleteFlash();  // 停止闪烁
   refreshDropZones();
 });
-
-    // ==================== 9. UI 状态 ====================
+    // ==================== 8. UI 状态 ====================
     function updateUI() {
       const any = images.some(i => i);
       resetBtn.classList.toggle('visible', any);
       fusionBtn.disabled = images.filter(i => i).length < 2;
     }
 
-   // ==================== 10. AI 融合按钮 ====================
-fusionBtn.addEventListener('click', () => {
-  const filled = images.filter(i => i);
-  if (filled.length < 2) {
-    alert('请至少拖入 2 张图片才能进行融合！');
-    return;
-  }
+    // ==================== 9. AI 融合 ====================
+    fusionBtn.addEventListener('click', () => {
+      const filled = images.filter(i => i);
+      if (filled.length < 2) {
+        alert('请至少拖入 2 张图片才能进行融合！');
+        return;
+      }
 
-  // 构造 key（按顺序：圆 → 三角 → 方）
-  const keyParts = [];
-  if (images[0]) keyParts.push(images[0].split('/').pop());
-  if (images[1]) keyParts.push(images[1].split('/').pop());
-  if (images[2]) keyParts.push(images[2].split('/').pop());
-  const key = keyParts.join('_');
+      const keyParts = [];
+      if (images[0]) keyParts.push(images[0].split('/').pop());
+      if (images[1]) keyParts.push(images[1].split('/').pop());
+      if (images[2]) keyParts.push(images[2].split('/').pop());
+      const key = keyParts.join('_');
 
-  resultOverlay.classList.add('show');
-  resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
-  fusionBtn.disabled = true;
+      resultOverlay.classList.add('show');
+      resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
+      fusionBtn.disabled = true;
 
-  setTimeout(() => {
-    const resultFile = fusionMap[key] || 'result.png';
-    resultOverlay.innerHTML = `<img src="${getImageUrl(resultFile)}" alt="融合结果">`;
-    fusionBtn.disabled = false;
+      setTimeout(() => {
+        const resultFile = fusionMap[key] || 'result.png';
+        resultOverlay.innerHTML = `<img src="${getImageUrl(resultFile)}" alt="融合结果">`;
+        fusionBtn.disabled = false;
+        playSuccessSound();
+        stopCompleteFlash();  // 融合完成 → 停止闪烁
+      }, 2000);
+    });
 
-    // 融合成功播放音效
-    playSuccessSound();
-  }, 2000);
-});
-    // ==================== 11. 初始化 ====================
+    // ==================== 10. 初始化 ====================
     document.querySelectorAll('.thumb').forEach(initThumbDrag);
-    document.querySelectorAll('.category-btn').forEach(initCategoryBtn);
     refreshDropZones();
     updateUI();
+
+    // 自动展开圆形和正方形
+    document.querySelectorAll('.right[data-category="1"], .right[data-category="3"]').forEach(panel => {
+      panel.classList.add('show');
+    });
   </script>
 </body>
 </html>
