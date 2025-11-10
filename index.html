@@ -408,22 +408,23 @@
     }
     .combo-item .placeholder.circle { border-radius: 50%; }
     .combo-item .placeholder.square { border-radius: 0; }
-    .combo-item .placeholder.triangle {
+.combo-item .placeholder.triangle {
   position: relative;
   background: #fff;
-  overflow: visible;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   border: none;
-  border-radius: 0;
+  overflow: visible;
 }
+
 .combo-item .placeholder.triangle::before {
   content: '';
   position: absolute;
-inset: 4px;
+  inset: 4px;
   border: 4px solid #333;
-  clip-path: inset(4px) polygon(50% 0%, 0% 100%, 100% 100%);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);  /* 去掉 inset(4px) */
   z-index: -1;
-  background: transparent;   /* 关键！让边框可见 */
+  background: #fff;
+  pointer-events: none;
 }
 .combo-track.complete-flash {
       animation: completeBreathe 1.8s ease-in-out infinite;
@@ -461,6 +462,37 @@ inset: 4px;
   z-index: -1;
   pointer-events: none;
   background: transparent;   /* 关键！让边框可见 */
+}
+/* 仅新增：三角形 wrapper 样式 */
+.img-wrapper.triangle {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+.img-wrapper.triangle::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 6px solid #333;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  z-index: -1;
+  pointer-events: none;
+  background: #fff;
+}
+.img-wrapper.triangle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  border: none !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+/* 占位符三角形也用 wrapper */
+.img-wrapper.triangle.placeholder::before {
+  background: #fff;
 }
 
     .combo-item img.circle { border-radius: 50% !important; object-fit: cover; }
@@ -821,6 +853,9 @@ inset: 4px;
       // ... 继续添加 ...
     };
 
+
+
+
   // ==================== 3. 音效 ====================
     function playSuccessSound() {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -881,14 +916,21 @@ inset: 4px;
   const squareRow = document.getElementById('rowSquare');
   squareRow.parentNode.insertBefore(triangleRow, squareRow);
   plusBtn.remove();
-
-  triangleRow.querySelectorAll('.thumb').forEach(initThumbDrag);
+triangleRow.querySelectorAll('.thumb').forEach(thumb => {
+      initThumbDrag(thumb);
+      addTouchSupport(thumb);  // 关键：添加触摸支持
+    });
 
   // === 2. 动态插入三角 combo-item 到 正方形之前 ===
-  const triangleCombo = document.createElement('div');
-  triangleCombo.className = 'combo-item';
-  triangleCombo.dataset.index = '1';
-  triangleCombo.innerHTML = `<div class="placeholder triangle"></div>`;
+const triangleCombo = document.createElement('div');
+triangleCombo.className = 'combo-item';
+triangleCombo.dataset.index = '1';
+// 插入三角形 combo-item 时
+triangleCombo.innerHTML = `
+  <div class="img-wrapper triangle placeholder">
+    <div></div>
+  </div>
+`;
 
   const squareCombo = comboTrack.querySelector('.combo-item[data-index="1"]');
   comboTrack.insertBefore(triangleCombo, squareCombo);
@@ -973,8 +1015,18 @@ dragHandlers.drop = (e) => {
   if (targetIdx !== -1 && images[targetIdx] === null) {
     const full = getImageUrl(data.src);
     images[targetIdx] = full;
-    const shape = cat === 1 ? 'circle' : cat === 2 ? 'triangle' : 'square';
+if (cat === 2) {
+    // 仅三角形用 wrapper
+    comboItems[targetIdx].innerHTML = `
+      <div class="img-wrapper triangle">
+        <img src="${full}" alt="">
+      </div>
+    `;
+  } else {
+    // 圆形和方形保持原样
+    const shape = cat === 1 ? 'circle' : 'square';
     comboItems[targetIdx].innerHTML = `<img src="${full}" class="${shape}" alt="">`;
+  }
     
     updateUI();
     checkAndTriggerCompleteFlash();
@@ -1017,6 +1069,91 @@ resultOverlay.style.transform = 'translateY(-50%)';
     //     }, 1800); // 动画时长
     //   }
     // }
+    // ==================== 7. 关键：触摸拖拽支持（希沃白板必备） ====================
+  function addTouchSupport(thumb) {
+    let touchData = null;
+
+    thumb.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const data = {
+        src: thumb.dataset.src,
+        cat: thumb.dataset.category
+      };
+      touchData = { data, x: touch.clientX, y: touch.clientY };
+
+      // 视觉反馈
+      thumb.style.opacity = '0.7';
+      thumb.style.transform = 'scale(0.95)';
+      thumb.style.transition = 'none';
+      thumb.style.position = 'fixed';
+      thumb.style.zIndex = '1000';
+      thumb.style.pointerEvents = 'none';
+      thumb.style.width = '90px';
+      thumb.style.height = '90px';
+      document.body.appendChild(thumb);
+    }, { passive: false });
+
+    thumb.addEventListener('touchmove', e => {
+      if (!touchData) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      thumb.style.left = (touch.clientX - 45) + 'px';
+      thumb.style.top = (touch.clientY - 45) + 'px';
+
+      // 高亮可放置区
+      const under = document.elementFromPoint(touch.clientX, touch.clientY);
+      comboItems.forEach(it => it.classList.remove('drag-over'));
+      if (under) {
+        const item = under.closest('.combo-item');
+        if (item && images[parseInt(item.dataset.index)] === null) {
+          item.classList.add('drag-over');
+        }
+      }
+    }, { passive: false });
+
+    thumb.addEventListener('touchend', e => {
+      if (!touchData) return;
+      e.preventDefault();
+
+      const touch = e.changedTouches[0];
+      const under = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetItem = under?.closest('.combo-item');
+
+      // 复位
+      thumb.style.position = '';
+      thumb.style.zIndex = '';
+      thumb.style.pointerEvents = '';
+      thumb.style.transition = '';
+      thumb.style.opacity = '';
+      thumb.style.transform = '';
+      thumb.style.left = '';
+      thumb.style.top = '';
+      thumb.parentElement.appendChild(thumb);
+
+      if (targetItem) {
+        const idx = parseInt(targetItem.dataset.index);
+        const cat = parseInt(touchData.data.cat);
+        let targetIdx = cat === 1 ? 0 : cat === 2 ? 1 : hasTriangleRow ? 2 : 1;
+
+        if (targetIdx === idx && images[targetIdx] === null) {
+          images[targetIdx] = getImageUrl(touchData.data.src);
+          if (cat === 2) {
+            targetItem.innerHTML = `<div class="img-wrapper triangle"><img src="${images[targetIdx]}"></div>`;
+          } else {
+            const shape = cat === 1 ? 'circle' : 'square';
+            targetItem.innerHTML = `<img src="${images[targetIdx]}" class="${shape}">`;
+          }
+          updateUI();
+          checkAndTriggerCompleteFlash();
+          playSuccessSound();
+        }
+      }
+
+      comboItems.forEach(it => it.classList.remove('drag-over'));
+      touchData = null;
+    }, { passive: false });
+  }
 
     // ==================== 7. 重置 ====================
   resetBtn.addEventListener('click', () => {
@@ -1027,7 +1164,7 @@ resultOverlay.style.transform = 'translateY(-50%)';
     if (i === 0) {
       it.innerHTML = `<div class="placeholder circle"></div>`;
     } else if (i === 1) {
-      it.innerHTML = `<div class="placeholder ${hasTriangleRow ? 'triangle' : 'square'}"></div>`;
+      it.innerHTML = `<div class="img-wrapper triangle placeholder"><div></div></div>`;
     } else if (i === 2 && hasTriangleRow) {
       it.innerHTML = `<div class="placeholder square"></div>`;
     }
@@ -1074,8 +1211,12 @@ resultOverlay.style.transform = 'translateY(-50%)';
     });
 
     // ==================== 10. 初始化 ====================
-    document.querySelectorAll('.thumb').forEach(initThumbDrag);
+  document.querySelectorAll('.thumb').forEach(thumb => {
+    initThumbDrag(thumb);
+    addTouchSupport(thumb);  // 关键：所有缩略图添加触摸支持
+  });
     refreshDropZones();
+    
     updateUI();
 
     // 自动展开圆形和正方形
