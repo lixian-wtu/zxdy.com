@@ -408,23 +408,12 @@
     }
     .combo-item .placeholder.circle { border-radius: 50%; }
     .combo-item .placeholder.square { border-radius: 0; }
-.combo-item .placeholder.triangle {
-  position: relative;
-  background: #fff;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  border: none;
-  overflow: visible;
-}
 
-.combo-item .placeholder.triangle::before {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border: 4px solid #333;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);  /* 去掉 inset(4px) */
-  z-index: -1;
-  background: #fff;
-  pointer-events: none;
+/* 三角形不使用 .placeholder 的基础样式，使用 .img-wrapper.triangle */
+.combo-item .img-wrapper.triangle.placeholder {
+  border: none !important;
+  border-radius: 0 !important;
+  /* 背景由 .combo-item .img-wrapper.triangle 控制，不在这里设置 */
 }
 .combo-track.complete-flash {
       animation: completeBreathe 1.8s ease-in-out infinite;
@@ -464,37 +453,43 @@ inset: 4px;
   background: transparent;   /* 关键！让边框可见 */
 }
 /* 仅新增：三角形 wrapper 样式 */
-.img-wrapper.triangle {
+.combo-item .img-wrapper.triangle {
   position: relative;
   width: 100%;
   height: 100%;
-  background: #fff;
+  background: #333 !important;  /* 改为：黑色背景作为边框层 */
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  border: none !important;  /* 新增：确保无边框 */
 }
-.img-wrapper.triangle::before {
+.combo-item .img-wrapper.triangle::before {
   content: '';
   position: absolute;
-  inset: 4px;
-  border: 6px solid #333;
+  top: 0;              /* 改为：从0开始 */
+  left: 0;
+  width: 100%;         /* 改为：占满宽度 */
+  height: 100%;        /* 改为：占满高度 */
+  background: #fff !important;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  z-index: -1;
+  transform: scale(0.92);  /* 新增：使用缩放缩小 */
+  transform-origin: center center;  /* 新增：从中心缩放 */
   pointer-events: none;
-  background: #fff;
+  z-index: 1;          /* 改为：在上层 */
 }
-.img-wrapper.triangle img {
+.combo-item .img-wrapper.triangle img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   border: none !important;
   box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  position: relative;  /* 新增 */
+  z-index: 2;          /* 新增 */
 }
 
 /* 占位符三角形也用 wrapper */
-.img-wrapper.triangle.placeholder::before {
-  background: #fff;
+.combo-item .img-wrapper.triangle.placeholder::before {
+  background: #fff !important;
 }
-
     .combo-item img.circle { border-radius: 50% !important; object-fit: cover; }
     .combo-item img.square { border-radius: 0 !important; }
     .combo-item img.triangle { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border-radius: 0 !important; }
