@@ -1069,91 +1069,106 @@ resultOverlay.style.transform = 'translateY(-50%)';
     //     }, 1800); // 动画时长
     //   }
     // }
-    // ==================== 7. 关键：触摸拖拽支持（希沃白板必备） ====================
-  function addTouchSupport(thumb) {
-    let touchData = null;
+  // ==================== 7. 关键：触摸拖拽支持（保留原图，复制模式） ====================
+function addTouchSupport(thumb) {
+  let ghost = null; // 跟随手指的“幽灵副本”
 
-    thumb.addEventListener('touchstart', e => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const data = {
-        src: thumb.dataset.src,
-        cat: thumb.dataset.category
-      };
-      touchData = { data, x: touch.clientX, y: touch.clientY };
+  thumb.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const data = {
+      src: thumb.dataset.src,
+      cat: thumb.dataset.category
+    };
 
-      // 视觉反馈
-      thumb.style.opacity = '0.7';
-      thumb.style.transform = 'scale(0.95)';
-      thumb.style.transition = 'none';
-      thumb.style.position = 'fixed';
-      thumb.style.zIndex = '1000';
-      thumb.style.pointerEvents = 'none';
-      thumb.style.width = '90px';
-      thumb.style.height = '90px';
-      document.body.appendChild(thumb);
-    }, { passive: false });
+    // 创建跟随手指的“幽灵副本”
+    ghost = document.createElement('div');
+    ghost.className = 'thumb dragging';
+    ghost.style.position = 'fixed';
+    ghost.style.width = '90px';
+    ghost.style.height = '90px';
+    ghost.style.pointerEvents = 'none';
+    ghost.style.zIndex = '1000';
+    ghost.style.opacity = '0.7';
+    ghost.style.transform = 'scale(0.95)';
+    ghost.style.left = (touch.clientX - 45) + 'px';
+    ghost.style.top = (touch.clientY - 45) + 'px';
+    ghost.style.background = '#fff';
+    ghost.style.borderRadius = thumb.classList.contains('category2') ? '0' : '50%';
+    ghost.style.clipPath = thumb.classList.contains('category2') ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none';
+    ghost.style.boxShadow = '0 8px 20px rgba(0,0,0,0.3)';
+    ghost.style.overflow = 'hidden';
+    ghost.style.border = '2px solid var(--highlight)';
 
-    thumb.addEventListener('touchmove', e => {
-      if (!touchData) return;
-      e.preventDefault();
-      const touch = e.touches[0];
-      thumb.style.left = (touch.clientX - 45) + 'px';
-      thumb.style.top = (touch.clientY - 45) + 'px';
+    const img = document.createElement('img');
+    img.src = getImageUrl(data.src);
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'contain';
+    if (thumb.classList.contains('category2')) {
+      img.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+    }
+    ghost.appendChild(img);
+    document.body.appendChild(ghost);
 
-      // 高亮可放置区
-      const under = document.elementFromPoint(touch.clientX, touch.clientY);
-      comboItems.forEach(it => it.classList.remove('drag-over'));
-      if (under) {
-        const item = under.closest('.combo-item');
-        if (item && images[parseInt(item.dataset.index)] === null) {
-          item.classList.add('drag-over');
-        }
+    // 存储数据
+    ghost.dataset.dragData = JSON.stringify(data);
+  }, { passive: false });
+
+  thumb.addEventListener('touchmove', e => {
+    if (!ghost) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    ghost.style.left = (touch.clientX - 45) + 'px';
+    ghost.style.top = (touch.clientY - 45) + 'px';
+
+    // 高亮可放置区
+    const under = document.elementFromPoint(touch.clientX, touch.clientY);
+    comboItems.forEach(it => it.classList.remove('drag-over'));
+    if (under) {
+      const item = under.closest('.combo-item');
+      if (item && images[parseInt(item.dataset.index)] === null) {
+        item.classList.add('drag-over');
       }
-    }, { passive: false });
+    }
+  }, { passive: false });
 
-    thumb.addEventListener('touchend', e => {
-      if (!touchData) return;
-      e.preventDefault();
+  thumb.addEventListener('touchend', e => {
+    if (!ghost) return;
+    e.preventDefault();
 
-      const touch = e.changedTouches[0];
-      const under = document.elementFromPoint(touch.clientX, touch.clientY);
-      const targetItem = under?.closest('.combo-item');
+    const touch = e.changedTouches[0];
+    const under = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetItem = under?.closest('.combo-item');
 
-      // 复位
-      thumb.style.position = '';
-      thumb.style.zIndex = '';
-      thumb.style.pointerEvents = '';
-      thumb.style.transition = '';
-      thumb.style.opacity = '';
-      thumb.style.transform = '';
-      thumb.style.left = '';
-      thumb.style.top = '';
-      thumb.parentElement.appendChild(thumb);
+    // 清理高亮
+    comboItems.forEach(it => it.classList.remove('drag-over'));
 
-      if (targetItem) {
-        const idx = parseInt(targetItem.dataset.index);
-        const cat = parseInt(touchData.data.cat);
-        let targetIdx = cat === 1 ? 0 : cat === 2 ? 1 : hasTriangleRow ? 2 : 1;
+    if (targetItem) {
+      const idx = parseInt(targetItem.dataset.index);
+      const data = JSON.parse(ghost.dataset.dragData);
+      const cat = parseInt(data.cat);
+      let targetIdx = cat === 1 ? 0 : cat === 2 ? 1 : hasTriangleRow ? 2 : 1;
 
-        if (targetIdx === idx && images[targetIdx] === null) {
-          images[targetIdx] = getImageUrl(touchData.data.src);
-          if (cat === 2) {
-            targetItem.innerHTML = `<div class="img-wrapper triangle"><img src="${images[targetIdx]}"></div>`;
-          } else {
-            const shape = cat === 1 ? 'circle' : 'square';
-            targetItem.innerHTML = `<img src="${images[targetIdx]}" class="${shape}">`;
-          }
-          updateUI();
-          checkAndTriggerCompleteFlash();
-          playSuccessSound();
+      if (targetIdx === idx && images[targetIdx] === null) {
+        images[targetIdx] = getImageUrl(data.src);
+        if (cat === 2) {
+          targetItem.innerHTML = `<div class="img-wrapper triangle"><img src="${images[targetIdx]}"></div>`;
+        } else {
+          const shape = cat === 1 ? 'circle' : 'square';
+          targetItem.innerHTML = `<img src="${images[targetIdx]}" class="${shape}">`;
         }
+        updateUI();
+        checkAndTriggerCompleteFlash();
+        playSuccessSound();
       }
+    }
 
-      comboItems.forEach(it => it.classList.remove('drag-over'));
-      touchData = null;
-    }, { passive: false });
-  }
+    // 移除幽灵副本
+    ghost.remove();
+    ghost = null;
+  }, { passive: false });
+}
 
     // ==================== 7. 重置 ====================
   resetBtn.addEventListener('click', () => {
