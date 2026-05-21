@@ -51,7 +51,7 @@
         }
         .canvas-combined {
             width: 100%;
-            height: 330px;
+            height: 420px;
             background: #f7efdb;
             border-radius: 60px;
             display: flex;
@@ -60,14 +60,15 @@
             box-shadow: inset 0 0 0 3px #ffe2ae;
             perspective: 1400px;
             cursor: grab;
+            touch-action: none;
         }
         .wrap-3d {
             position: relative;
             transform-style: preserve-3d;
         }
         .grid-2x3 {
-            width: 180px;
-            height: 120px;
+            width: 480px;
+            height: 240px;
             background-image: linear-gradient(#999 1px, transparent 1px),linear-gradient(90deg, #999 1px, transparent 1px);
             background-size: 60px 60px;
             border: 1px solid #999;
@@ -95,7 +96,6 @@
             cursor: grab;
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
-        /* 标准60px边长立方体 完美六面定位 */
         .solid-block {
             width: 60px;
             height: 60px;
@@ -144,85 +144,115 @@ const viewBox = document.getElementById('viewBox');
 const main3d = document.getElementById('main3d');
 const redPreview = document.getElementById('redPreview');
 const SIZE = 60;
-const gridPos = [
-    [0,0],[SIZE,0],[SIZE*2,0],
-    [0,SIZE],[SIZE,SIZE],[SIZE*2,SIZE]
-];
-let gridUsed = Array(6).fill(false);
+const ROW = 4;
+const COL = 8;
+
+const gridPos = [];
+for (let r = 0; r < ROW; r++) {
+  for (let c = 0; c < COL; c++) {
+    gridPos.push([c * SIZE, r * SIZE]);
+  }
+}
+let gridUsed = Array(ROW * COL).fill(false);
 let curHoverIndex = -1;
 
-// 修正旋转：X上下 Y左右 标准三维旋转
 let rotateX = -25;
 let rotateY = 35;
-let dragView = false;
-let mx1,my1;
+let isDragging = false;
+let lastX, lastY;
 
-viewBox.addEventListener('mousedown',e=>{
-    dragView = true;
-    mx1 = e.clientX;
-    my1 = e.clientY;
-    viewBox.style.cursor='grabbing';
+// 鼠标旋转
+viewBox.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  lastX = e.clientX;
+  lastY = e.clientY;
+  viewBox.style.cursor = 'grabbing';
 });
-window.addEventListener('mousemove',e=>{
-    if(!dragView)return;
-    let dx = e.clientX - mx1;
-    let dy = e.clientY - my1;
-    rotateY += dx * 0.15;
-    rotateX -= dy * 0.15;
-    rotateX = Math.max(-60,Math.min(30,rotateX));
-    // 标准三维旋转公式
-    main3d.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - lastX;
+  const dy = e.clientY - lastY;
+  rotateY += dx * 0.15;
+  rotateX -= dy * 0.15;
+  rotateX = Math.max(-60, Math.min(30, rotateX));
+  main3d.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  lastX = e.clientX;
+  lastY = e.clientY;
 });
-window.addEventListener('mouseup',()=>{
-    dragView = false;
-    viewBox.style.cursor='grab';
-});
-
-let dragColor = "";
-document.querySelectorAll('.source-block').forEach(el=>{
-    el.ondragstart = ()=> dragColor = el.style.backgroundColor;
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+  viewBox.style.cursor = 'grab';
 });
 
-viewBox.ondragover = e=>e.preventDefault();
-viewBox.ondragleave = ()=>redPreview.style.display='none';
+// 希沃触摸旋转
+viewBox.addEventListener('touchstart', (e) => {
+  if (e.touches.length !== 1) return;
+  isDragging = true;
+  lastX = e.touches[0].clientX;
+  lastY = e.touches[0].clientY;
+  e.preventDefault();
+});
+window.addEventListener('touchmove', (e) => {
+  if (!isDragging || e.touches.length !== 1) return;
+  const dx = e.touches[0].clientX - lastX;
+  const dy = e.touches[0].clientY - lastY;
+  rotateY += dx * 0.15;
+  rotateX -= dy * 0.15;
+  rotateX = Math.max(-60, Math.min(30, rotateX));
+  main3d.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  lastX = e.touches[0].clientX;
+  lastY = e.touches[0].clientY;
+  e.preventDefault();
+});
+window.addEventListener('touchend', () => {
+  isDragging = false;
+});
 
-viewBox.ondragover = e=>{
-    e.preventDefault();
-    let rect = main3d.getBoundingClientRect();
-    let x = e.clientX - rect.left;
-    let y = e.clientY - rect.top;
-    let col = Math.floor(x/SIZE);
-    let row = Math.floor(y/SIZE);
-    let idx = row*3+col;
-    if(idx>=0&&idx<6&&!gridUsed[idx]){
-        curHoverIndex=idx;
-        redPreview.style.left=gridPos[idx][0]+'px';
-        redPreview.style.top=gridPos[idx][1]+'px';
-        redPreview.style.display='block';
-    }else{
-        redPreview.style.display='none';
-        curHoverIndex=-1;
-    }
+// 拖拽方块
+let dragColor = '';
+document.querySelectorAll('.source-block').forEach(el => {
+  el.ondragstart = () => dragColor = el.style.backgroundColor;
+});
+
+viewBox.ondragover = e => e.preventDefault();
+viewBox.ondragleave = () => redPreview.style.display = 'none';
+
+viewBox.ondragover = e => {
+  e.preventDefault();
+  const rect = main3d.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const col = Math.floor(x / SIZE);
+  const row = Math.floor(y / SIZE);
+  const idx = row * COL + col;
+  if (idx >= 0 && idx < gridPos.length && !gridUsed[idx]) {
+    curHoverIndex = idx;
+    redPreview.style.left = gridPos[idx][0] + 'px';
+    redPreview.style.top = gridPos[idx][1] + 'px';
+    redPreview.style.display = 'block';
+  } else {
+    redPreview.style.display = 'none';
+    curHoverIndex = -1;
+  }
 };
 
-viewBox.ondrop = e=>{
-    e.preventDefault();
-    redPreview.style.display='none';
-    if(curHoverIndex===-1||!dragColor)return;
-    gridUsed[curHoverIndex]=true;
-    let [px,py] = gridPos[curHoverIndex];
-    let cube = document.createElement('div');
-    cube.className='solid-block';
-    cube.style.left=px+'px';
-    cube.style.top=py+'px';
-    // 一次性创建完整6个面
-    ['front','back','left','right','top','bottom'].forEach(n=>{
-        let d=document.createElement('div');
-        d.className='b-'+n;
-        d.style.background=dragColor;
-        cube.appendChild(d);
-    });
-    main3d.appendChild(cube);
+viewBox.ondrop = e => {
+  e.preventDefault();
+  redPreview.style.display = 'none';
+  if (curHoverIndex === -1 || !dragColor) return;
+  gridUsed[curHoverIndex] = true;
+  const [px, py] = gridPos[curHoverIndex];
+  const cube = document.createElement('div');
+  cube.className = 'solid-block';
+  cube.style.left = px + 'px';
+  cube.style.top = py + 'px';
+  ['front','back','left','right','top','bottom'].forEach(n => {
+    const d = document.createElement('div');
+    d.className = 'b-' + n;
+    d.style.background = dragColor;
+    cube.appendChild(d);
+  });
+  main3d.appendChild(cube);
 };
 </script>
 </body>
