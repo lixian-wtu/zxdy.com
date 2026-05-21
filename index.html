@@ -1,1238 +1,229 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>动态三行拖拽组合</title>
-  <style>
-    :root{
-      --sky-blue:#87ceeb;
-      --grass-green:#90ee90;
-      --highlight:#ff6b6b;
-      --cancel:#6c757d;
-      --combo-bg: #FFFACD;   /* 鹅黄色 */
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body{
-      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: linear-gradient(180deg, var(--sky-blue) 0%, var(--sky-blue) 60%, var(--grass-green) 60%, var(--grass-green) 100%);
-      min-height:100vh;
-      padding:20px 20px 50px; 
-      display:flex;
-      justify-content:center;
-      overflow:auto;
-      position: relative;
-    }
-
-    .cloud {
-      position:absolute;
-      background:white;
-      border-radius:100px;
-      opacity:0.8;
-      z-index:1;
-    }
-    .cloud1{ width:120px; height:50px; top:10%; left:10%; } 
-    .cloud2{ width:90px; height:40px; top:18%; right:15%; } 
-    .cloud3{ width:100px; height:45px; top:25%; left:50%; } 
-    .cloud::before, .cloud::after {
-      content:'';
-      position:absolute;
-      background:white;
-      border-radius:50%;
-    }
-    .cloud1::before { width:60px; height:60px; top:-30px; left:20px; }
-    .cloud1::after { width:40px; height:40px; top:-15px; right:10px; }
-    .cloud2::before { width:50px; height:50px; top:-25px; left:15px; }
-    .cloud3::before { width:55px; height:55px; top:-28px; left:25px; }
-
-    .container {
-      width: 95%;
-      max-width: 1200px;
-      position: relative;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      gap: 30px;
-      margin: 0 auto;
-      min-height: 100vh;
-      justify-content: center;
-      align-items: center;
-      padding: 40px 20px;
-    }
-
-    .controls {
-      text-align: center;
-      margin-bottom: 10px; 
-      z-index: 20;
-    }
-    .reset-btn {
-      background: var(--cancel);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      display: none;
-    }
-    .reset-btn.visible { display: inline-block; }
-    .reset-btn:hover { background: #5a6268; }
-
-    .row {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-      position: relative;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    #row1 {
-      margin-top: -5px;
-    }
-
-  .plus-btn {
-  position: absolute;
-  top: 80px;           /* 距离顶部 */
-  left: 30px;          /* 距离左侧 */
-  width: 60px;
-  height: 60px;
-  background: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  font-weight: bold;
-  color: var(--highlight);
-  cursor: pointer;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-  z-index: 25;         /* 高于云朵 */
-  transition: all 0.3s ease;
-}
-
-.plus-btn:hover {
-  transform: scale(1.15);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.3);
-}
-
-/* 小屏幕适配 */
-@media (max-width: 900px) {
-  .plus-btn {
-    top: 60px;
-    left: 15px;
-    width: 50px;
-    height: 50px;
-    font-size: 28px;
-  }
-}
-    .right {
-      flex:1;
-      display:flex;
-      gap:12px;
-      transform: translateX(0) !important;
-      opacity:1 !important;
-      pointer-events:auto !important;
-      transition: all .35s ease;
-    }
-
-    .thumb-grid{ display:flex; gap:12px; flex-wrap:wrap; }
-    .thumb{
-      width:90px; height:90px;
-      background:#fff;
-      border-radius:50%;
-      box-shadow:0 4px 12px rgba(0,0,0,0.1);
-      overflow:hidden;
-      cursor:grab;
-      padding:6px;
-      border:2px solid transparent;
-      transition: all .2s;
-    }
-    .thumb.category2 { border-radius:0; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
-    .thumb.category3 { border-radius:0; }
-    .thumb.category2 img, .thumb.category3 img { clip-path: inherit; }
-    .thumb:hover { transform: translateY(-6px); box-shadow:0 8px 20px rgba(0,0,0,0.18); border-color:var(--highlight); }
-    .thumb.dragging { opacity:0.7; transform:scale(0.95); cursor:grabbing; }
-    .thumb img { width:100%; height:100%; object-fit:contain; }
-
-    .combo-track {
-      width: 100%;
-      max-width: 900px;
-      height: 140px;
-      background: var(--combo-bg);
-      border-radius: 20px;
-      margin: 30px auto 0; 
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap:5px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-      position: relative;
-      z-index: 10;
-      transition: gap 0.3s ease;
-    }
-    .combo-track.three {
-      gap: 5px;
-    }
-
-    .combo-item {
-      width: 110px;
-      height: 110px;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.3s ease;
-    }
-   .combo-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  border: 4px solid #333;        /* 新增：实线边框 */
-  background: #fff;              /* 新增：填充背景 */
-}
-    .combo-item.drag-over {
-      transform: scale(1.08);
-    }
-.result-overlay {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 140px;
-  height: 140px;
-  background: rgba(255,255,255,0.95);
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  z-index: 20;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-    .result-overlay.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .result-overlay .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid var(--highlight);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 10px;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .result-overlay .text {
-      font-weight: bold;
-      color: var(--highlight);
-      font-size: 14px;
-    }
-    .result-overlay img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      /* border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(255,107,107,0.4); */
-    }
-
-    .generate-section {
-      margin-top: 35px;
-      text-align: center;
-    }
-.plus-sign {
-  width: 120px;        /* 原 140px → 120px */
-  height: 120px;
-  position: relative;
-  pointer-events: none;
-  user-select: none;
-  margin: 0;
-  z-index: 5;
-}
-
-/* 删除原来的 .plus-btn 样式，替换为以下 */
-
-.cloud-btn {
-  position: absolute;
-  top: 70px;
-  left: 25px;
-  width: 90px;
-  height: 50px;
-  background: white;
-  border-radius: 50px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 25;
-  transition: all 0.3s ease;
-  opacity: 0.95;
-  user-select: none;
-}
-
-.cloud-btn::before,
-.cloud-btn::after {
-  content: '';
-  position: absolute;
-  background: white;
-  border-radius: 50%;
-}
-
-.cloud-btn::before {
-  width: 50px;
-  height: 50px;
-  top: -25px;
-  left: 15px;
-}
-
-.cloud-btn::after {
-  width: 35px;
-  height: 35px;
-  top: -15px;
-  right: 15px;
-}
-
-.plus-icon {
-  font-size: 28px;
-  font-weight: bold;
-  color: var(--highlight);
-  z-index: 2;
-  pointer-events: none;
-}
-
-/* 悬停效果 */
-.cloud-btn:hover {
-  transform: translateY(-4px) scale(1.08);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.28);
-  opacity: 1;
-}
-
-/* 小屏幕适配 */
-@media (max-width: 900px) {
-  .cloud-btn {
-    top: 55px;
-    left: 15px;
-    width: 75px;
-    height: 42px;
-  }
-  .cloud-btn::before {
-    width: 42px; height: 42px; top: -21px; left: 12px;
-  }
-  .cloud-btn::after {
-    width: 30px; height: 30px; top: -13px; right: 12px;
-  }
-  .plus-icon {
-    font-size: 24px;
-  }
-}
-
-/* 横线 */
-.plus-sign::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 12px;        /* 微调对齐 */
-  right: 12px;
-  height: 18px;      /* 稍细一点 */
-  background: #000;
-  transform: translateY(-50%);
-}
-
-/* 竖线 */
-.plus-sign::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 12px;
-  bottom: 12px;
-  width: 18px;
-  background: #000;
-  transform: translateX(-50%);
-}
-@media(max-width:900px) {
-  .combo-track {
-    gap: 12px;         /* 原 20px → 12px */
-  }
-  .plus-sign {
-    width: 100px;
-    height: 100px;
-    margin: 0;         /* 移除 margin */
-  }
-  .plus-sign::before {
-    left: 10px;
-    right: 10px;
-    height: 16px;
-  }
-  .plus-sign::after {
-    top: 10px;
-    bottom: 10px;
-    width: 16px;
-  }
-}
-    .generate-btn {
-      background: linear-gradient(135deg, #ff6b6b, #feca57);
-      color: white;
-      border: none;
-      padding: 15px 36px;
-      border-radius: 12px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
-      transition: all .3s ease;
-    }
-    .generate-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.3); }
-    .generate-btn:disabled { background: #95a5a6; cursor: not-allowed; }
-
-    @media(max-width:900px){
-      .container{ gap:25px; margin-top: -5px; }
-      .row{ flex-wrap:wrap; justify-content:center; }
-      .right{ width:100%; justify-content:center; }
-      .combo-track { height: 110px; gap: 20px; margin-top: 20px; }
-      .combo-item { width: 80px; height: 80px; }
-      .result-overlay { width: 100px; height: 100px; }
-    }
-
-    .combo-item .placeholder {
-      width: 100%; height: 100%; background: #fff; border: 4px solid #333;
-      border-radius: 12px; transition: all 0.3s ease;
-    }
-    .combo-item .placeholder.circle { border-radius: 50%; }
-    .combo-item .placeholder.square { border-radius: 0; }
-
-/* 三角形不使用 .placeholder 的基础样式，使用 .img-wrapper.triangle */
-.combo-item .img-wrapper.triangle.placeholder {
-  border: none !important;
-  border-radius: 0 !important;
-  /* 背景由 .combo-item .img-wrapper.triangle 控制，不在这里设置 */
-}
-.combo-track.complete-flash {
-      animation: completeBreathe 1.8s ease-in-out infinite;
-    }
-
-    @keyframes completeBreathe {
-      0% {
-        filter: brightness(1) drop-shadow(0 0 0 rgba(255, 107, 107, 0));
-        transform: scale(1);
-      }
-      50% {
-        filter: brightness(1.35) drop-shadow(0 0 40px rgba(255, 107, 107, 0.7));
-        transform: scale(1.03);
-      }
-      100% {
-        filter: brightness(1) drop-shadow(0 0 0 rgba(255, 107, 107, 0));
-        transform: scale(1);
-      }
-    }
-
-/* 三角形图片：也用 ::before 画边框 */
-.combo-item img.triangle {
-  position: relative;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  border: none !important;      /* 移除原 border */
-  z-index: 1;
-  background: #fff; /* 新增：填充白色背景 */
-}
-.combo-item img.triangle::before {
-  content: '';
-  position: absolute;
-inset: 4px;
-  border: 4px solid #333;
- clip-path:polygon(50% 0%, 0% 100%, 100% 100%);  /* 移除 inset(4px) */
-  z-index: -1;
-  pointer-events: none;
-  background: transparent;   /* 关键！让边框可见 */
-}
-/* 仅新增：三角形 wrapper 样式 */
-.combo-item .img-wrapper.triangle {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  background: #333 !important;  /* 改为：黑色背景作为边框层 */
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  border: none !important;  /* 新增：确保无边框 */
-}
-.combo-item .img-wrapper.triangle::before {
-  content: '';
-  position: absolute;
-  top: 0;              /* 改为：从0开始 */
-  left: 0;
-  width: 100%;         /* 改为：占满宽度 */
-  height: 100%;        /* 改为：占满高度 */
-  background: #fff !important;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  transform: scale(0.92);  /* 新增：使用缩放缩小 */
-  transform-origin: center center;  /* 新增：从中心缩放 */
-  pointer-events: none;
-  z-index: 1;          /* 改为：在上层 */
-}
-.combo-item .img-wrapper.triangle img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  border: none !important;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  position: relative;  /* 新增 */
-  z-index: 2;          /* 新增 */
-}
-
-/* 占位符三角形也用 wrapper */
-.combo-item .img-wrapper.triangle.placeholder::before {
-  background: #fff !important;
-}
-    .combo-item img.circle { border-radius: 50% !important; object-fit: cover; }
-    .combo-item img.square { border-radius: 0 !important; }
-    .combo-item img.triangle { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border-radius: 0 !important; }
-
-    .combo-item.drag-over .placeholder {
-      border-color: var(--highlight);
-      background: rgba(255, 107, 107, 0.1);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title></title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: linear-gradient(145deg, #f8f9ff 0%, #e9f0f5 100%);
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .board {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(255,255,240,0.95);
+            border-radius: 80px 80px 70px 70px;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.2);
+            padding: 20px 20px 30px;
+        }
+        .area-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 25px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .combined-area {
+            width: 280px;
+            flex-shrink: 0;
+            background: #fffaf0;
+            border-radius: 55px;
+            padding: 20px 15px;
+            border: 3px solid #ffdfa5;
+        }
+        .shapes-area {
+            flex: 1;
+            background: #fef6e8;
+            border-radius: 55px;
+            padding: 20px 15px;
+            border: 3px solid #ffdfa5;
+        }
+        .canvas-combined {
+            width: 100%;
+            height: 330px;
+            background: #f7efdb;
+            border-radius: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 0 3px #ffe2ae;
+            perspective: 1400px;
+            cursor: grab;
+        }
+        .wrap-3d {
+            position: relative;
+            transform-style: preserve-3d;
+        }
+        .grid-2x3 {
+            width: 180px;
+            height: 120px;
+            background-image: linear-gradient(#999 1px, transparent 1px),linear-gradient(90deg, #999 1px, transparent 1px);
+            background-size: 60px 60px;
+            border: 1px solid #999;
+            background-color: #fff;
+        }
+        .hover-red-box {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 3px solid #f53f3f;
+            background: rgba(245,63,63,0.15);
+            pointer-events: none;
+            display: none;
+        }
+        .shape-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        .source-block {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            cursor: grab;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        /* 标准60px边长立方体 完美六面定位 */
+        .solid-block {
+            width: 60px;
+            height: 60px;
+            position: absolute;
+            transform-style: preserve-3d;
+            transform-origin: center center;
+        }
+        .solid-block > div {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 1px solid rgba(0,0,0,0.15);
+        }
+        .b-front  { transform: translateZ(30px); }
+        .b-back   { transform: translateZ(-30px) rotateY(180deg); }
+        .b-left   { transform: translateX(-30px) rotateY(-90deg); }
+        .b-right  { transform: translateX(30px)  rotateY(90deg); }
+        .b-top    { transform: translateY(-30px) rotateX(90deg); }
+        .b-bottom { transform: translateY(30px)  rotateX(-90deg); }
+    </style>
 </head>
 <body>
-  <div class="cloud cloud1"></div>
-  <div class="cloud cloud2"></div>
-  <div class="cloud cloud3"></div>
-
-  <div class="container">
-    <div class="controls">
-      <button class="reset-btn" id="resetBtn">重置组合</button>
+<div class="board">
+    <div class="area-container">
+        <div class="combined-area">
+            <div class="shape-grid">
+                <div class="source-block" style="background:#ff9999" draggable="true"></div>
+                <div class="source-block" style="background:#99ccff" draggable="true"></div>
+                <div class="source-block" style="background:#99ff99" draggable="true"></div>
+                <div class="source-block" style="background:#ffcc99" draggable="true"></div>
+            </div>
+        </div>
+        <div class="shapes-area">
+            <div class="canvas-combined" id="viewBox">
+                <div class="wrap-3d" id="main3d">
+                    <div class="grid-2x3"></div>
+                    <div class="hover-red-box" id="redPreview"></div>
+                </div>
+            </div>
+        </div>
     </div>
- <div class="cloud-btn" id="plusBtn">
-  <span class="plus-icon"></span>
 </div>
 
-    <!-- 第一行：圆形 -->
-    <div class="row" id="row1">
-      <div class="left"></div>
-      <div class="right" data-category="1">
-        <div class="thumb-grid">
-          <div class="thumb" data-src="thumb1.png" data-category="1" draggable="true"><img src="thumb1.png"></div>
-          <div class="thumb" data-src="thumb2.png" data-category="1" draggable="true"><img src="thumb2.png"></div>
-          <div class="thumb" data-src="thumb3.png" data-category="1" draggable="true"><img src="thumb3.png"></div>
-          <div class="thumb" data-src="thumb4.jpg" data-category="1" draggable="true"><img src="thumb4.jpg"></div>
-          <div class="thumb" data-src="thumb5.png" data-category="1" draggable="true"><img src="thumb5.png"></div>
-          <div class="thumb" data-src="thumb6.png" data-category="1" draggable="true"><img src="thumb6.png"></div>
-        </div>
-      </div>
-    </div>
+<script>
+const viewBox = document.getElementById('viewBox');
+const main3d = document.getElementById('main3d');
+const redPreview = document.getElementById('redPreview');
+const SIZE = 60;
+const gridPos = [
+    [0,0],[SIZE,0],[SIZE*2,0],
+    [0,SIZE],[SIZE,SIZE],[SIZE*2,SIZE]
+];
+let gridUsed = Array(6).fill(false);
+let curHoverIndex = -1;
 
+// 修正旋转：X上下 Y左右 标准三维旋转
+let rotateX = -25;
+let rotateY = 35;
+let dragView = false;
+let mx1,my1;
 
-
-    <!-- 初始正方形行 -->
-    <div class="row" id="rowSquare">
-      <div class="left"></div>
-      <div class="right" data-category="3">
-        <div class="thumb-grid">
-          <div class="thumb category3" data-src="Z7.png" data-category="3" draggable="true"><img src="Z7.png"></div>
-          <div class="thumb category3" data-src="Z2.png" data-category="3" draggable="true"><img src="Z2.png"></div>
-          <div class="thumb category3" data-src="Z3.png" data-category="3" draggable="true"><img src="Z3.png"></div>
-          <div class="thumb category3" data-src="Z4.png" data-category="3" draggable="true"><img src="Z4.png"></div>
-          <div class="thumb category3" data-src="Z5.png" data-category="3" draggable="true"><img src="Z5.png"></div>
-          <div class="thumb category3" data-src="Z6.png" data-category="3" draggable="true"><img src="Z6.png"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 三角形行容器（动态插入） -->
-    <div id="triangleRowContainer"></div>
-
-    <!-- 组合框：初始只显示圆 + 正方形 -->
-    <div class="combo-track" id="comboTrack">
-      <div class="combo-item" data-index="0"><div class="placeholder circle"></div></div>
-      <div class="combo-item" data-index="1"><div class="placeholder square"></div></div>
-      <!-- 第三个由 JS 动态插入 -->
-      <div class="result-overlay" id="resultOverlay">
-        <div class="spinner"></div>
-        <div class="text">融合中…</div>
-      </div>
-    </div>
-
-    <!-- AI 融合生成按钮 -->
-    <div class="generate-section">
-      <button class="generate-btn" id="fusionBtn">AI 融合生成</button>
-    </div>
-  </div>
-
-  <script>
-    // ==================== 1. 基础配置 ====================
-    const OSS_BASE = 'https://huwei1314.oss-cn-beijing.aliyuncs.com/images/';
-    const getImageUrl = (filename) => `${OSS_BASE}${filename}`;
-
-    const plusBtn      = document.getElementById('plusBtn');
-    const comboTrack   = document.getElementById('comboTrack');
-    const resultOverlay= document.getElementById('resultOverlay');
-    const fusionBtn    = document.getElementById('fusionBtn');
-    const resetBtn     = document.getElementById('resetBtn');
-
-    let comboItems = Array.from(document.querySelectorAll('.combo-item'));
-    let images = [null, null, null];               // [圆, 三角, 方]
-    let hasTriangleRow = false;
- let keepFlashing = false;   // 控制持续闪烁
-
-    // ==================== 2. 融合映射（支持 2/3 张） ====================
-    const fusionMap = {
-      // 圆形 + 正方形（你原来的 36 条）
-      'thumb1.png_Z7.png': 'result_thumb1_Z7.png',
-      'thumb1.png_Z2.png': 'result_thumb1_Z2.png',
-      'thumb1.png_Z3.png': 'result_thumb1_Z3.png',
-      'thumb1.png_Z4.png': 'result_thumb1_Z4.png',
-      'thumb1.png_Z5.png': 'result_thumb1_Z5.png',
-      'thumb1.png_Z6.png': 'result_thumb1_Z6.png',
-      'thumb2.png_Z7.png': 'result_thumb2_Z7.png',
-      'thumb2.png_Z2.png': 'result_thumb2_Z2.png',
-      'thumb2.png_Z3.png': 'result_thumb2_Z3.png',
-      'thumb2.png_Z4.png': 'result_thumb2_Z4.png',
-      'thumb2.png_Z5.png': 'result_thumb2_Z5.png',
-      'thumb2.png_Z6.png': 'result_thumb2_Z6.png',
-      'thumb3.png_Z7.png': 'result_thumb3_Z7.png',
-      'thumb3.png_Z2.png': 'result_thumb3_Z2.png',
-      'thumb3.png_Z3.png': 'result_thumb3_Z3.png',
-      'thumb3.png_Z4.png': 'result_thumb3_Z4.png',
-      'thumb3.png_Z5.png': 'result_thumb3_Z5.png',
-      'thumb3.png_Z6.png': 'result_thumb3_Z6.png',
-      'thumb4.jpg_Z7.png': 'result_thumb4_Z7.png',
-      'thumb4.jpg_Z2.png': 'result_thumb4_Z2.png',
-      'thumb4.jpg_Z3.png': 'result_thumb4_Z3.png',
-      'thumb4.jpg_Z4.png': 'result_thumb4_Z4.png',
-      'thumb4.jpg_Z5.png': 'result_thumb4_Z5.png',
-      'thumb4.jpg_Z6.png': 'result_thumb4_Z6.png',
-      'thumb5.png_Z7.png': 'result_thumb5_Z7.png',
-      'thumb5.png_Z2.png': 'result_thumb5_Z2.png',
-      'thumb5.png_Z3.png': 'result_thumb5_Z3.png',
-      'thumb5.png_Z4.png': 'result_thumb5_Z4.png',
-      'thumb5.png_Z5.png': 'result_thumb5_Z5.png',
-      'thumb5.png_Z6.png': 'result_thumb5_Z6.png',
-      'thumb6.png_Z7.png': 'result_thumb6_Z7.png',
-      'thumb6.png_Z2.png': 'result_thumb6_Z2.png',
-      'thumb6.png_Z3.png': 'result_thumb6_Z3.png',
-      'thumb6.png_Z4.png': 'result_thumb6_Z4.png',
-      'thumb6.png_Z5.png': 'result_thumb6_Z5.png',
-      'thumb6.png_Z6.png': 'result_thumb6_Z6.png',
-
-  
-      // 三张组合（示例）
-      // 三张组合：圆_三角_方 → result_圆_三角_方
-'thumb1.png_S1.png_Z7.png': 'result_thumb1_S1_Z7.png',
-'thumb1.png_S1.png_Z2.png': 'result_thumb1_S1_Z2.png',
-'thumb1.png_S1.png_Z3.png': 'result_thumb1_S1_Z3.png',
-'thumb1.png_S1.png_Z4.png': 'result_thumb1_S1_Z4.png',
-'thumb1.png_S1.png_Z5.png': 'result_thumb1_S1_Z5.png',
-'thumb1.png_S1.png_Z6.png': 'result_thumb1_S1_Z6.png',
-'thumb1.png_S2.png_Z7.png': 'result_thumb1_S2_Z7.png',
-'thumb1.png_S2.png_Z2.png': 'result_thumb1_S2_Z2.png',
-'thumb1.png_S2.png_Z3.png': 'result_thumb1_S2_Z3.png',
-'thumb1.png_S2.png_Z4.png': 'result_thumb1_S2_Z4.png',
-'thumb1.png_S2.png_Z5.png': 'result_thumb1_S2_Z5.png',
-'thumb1.png_S2.png_Z6.png': 'result_thumb1_S2_Z6.png',
-'thumb1.png_S3.png_Z7.png': 'result_thumb1_S3_Z7.png',
-'thumb1.png_S3.png_Z2.png': 'result_thumb1_S3_Z2.png',
-'thumb1.png_S3.png_Z3.png': 'result_thumb1_S3_Z3.png',
-'thumb1.png_S3.png_Z4.png': 'result_thumb1_S3_Z4.png',
-'thumb1.png_S3.png_Z5.png': 'result_thumb1_S3_Z5.png',
-'thumb1.png_S3.png_Z6.png': 'result_thumb1_S3_Z6.png',
-'thumb1.png_S4.png_Z7.png': 'result_thumb1_S4_Z7.png',
-'thumb1.png_S4.png_Z2.png': 'result_thumb1_S4_Z2.png',
-'thumb1.png_S4.png_Z3.png': 'result_thumb1_S4_Z3.png',
-'thumb1.png_S4.png_Z4.png': 'result_thumb1_S4_Z4.png',
-'thumb1.png_S4.png_Z5.png': 'result_thumb1_S4_Z5.png',
-'thumb1.png_S4.png_Z6.png': 'result_thumb1_S4_Z6.png',
-'thumb1.png_S5.png_Z7.png': 'result_thumb1_S5_Z7.png',
-'thumb1.png_S5.png_Z2.png': 'result_thumb1_S5_Z2.png',
-'thumb1.png_S5.png_Z3.png': 'result_thumb1_S5_Z3.png',
-'thumb1.png_S5.png_Z4.png': 'result_thumb1_S5_Z4.png',
-'thumb1.png_S5.png_Z5.png': 'result_thumb1_S5_Z5.png',
-'thumb1.png_S5.png_Z6.png': 'result_thumb1_S5_Z6.png',
-'thumb1.png_S6.png_Z7.png': 'result_thumb1_S6_Z7.png',
-'thumb1.png_S6.png_Z2.png': 'result_thumb1_S6_Z2.png',
-'thumb1.png_S6.png_Z3.png': 'result_thumb1_S6_Z3.png',
-'thumb1.png_S6.png_Z4.png': 'result_thumb1_S6_Z4.png',
-'thumb1.png_S6.png_Z5.png': 'result_thumb1_S6_Z5.png',
-'thumb1.png_S6.png_Z6.png': 'result_thumb1_S6_Z6.png',
-
-'thumb2.png_S1.png_Z7.png': 'result_thumb2_S1_Z7.png',
-'thumb2.png_S1.png_Z2.png': 'result_thumb2_S1_Z2.png',
-'thumb2.png_S1.png_Z3.png': 'result_thumb2_S1_Z3.png',
-'thumb2.png_S1.png_Z4.png': 'result_thumb2_S1_Z4.png',
-'thumb2.png_S1.png_Z5.png': 'result_thumb2_S1_Z5.png',
-'thumb2.png_S1.png_Z6.png': 'result_thumb2_S1_Z6.png',
-'thumb2.png_S2.png_Z7.png': 'result_thumb2_S2_Z7.png',
-'thumb2.png_S2.png_Z2.png': 'result_thumb2_S2_Z2.png',
-'thumb2.png_S2.png_Z3.png': 'result_thumb2_S2_Z3.png',
-'thumb2.png_S2.png_Z4.png': 'result_thumb2_S2_Z4.png',
-'thumb2.png_S2.png_Z5.png': 'result_thumb2_S2_Z5.png',
-'thumb2.png_S2.png_Z6.png': 'result_thumb2_S2_Z6.png',
-'thumb2.png_S3.png_Z7.png': 'result_thumb2_S3_Z7.png',
-'thumb2.png_S3.png_Z2.png': 'result_thumb2_S3_Z2.png',
-'thumb2.png_S3.png_Z3.png': 'result_thumb2_S3_Z3.png',
-'thumb2.png_S3.png_Z4.png': 'result_thumb2_S3_Z4.png',
-'thumb2.png_S3.png_Z5.png': 'result_thumb2_S3_Z5.png',
-'thumb2.png_S3.png_Z6.png': 'result_thumb2_S3_Z6.png',
-'thumb2.png_S4.png_Z7.png': 'result_thumb2_S4_Z7.png',
-'thumb2.png_S4.png_Z2.png': 'result_thumb2_S4_Z2.png',
-'thumb2.png_S4.png_Z3.png': 'result_thumb2_S4_Z3.png',
-'thumb2.png_S4.png_Z4.png': 'result_thumb2_S4_Z4.png',
-'thumb2.png_S4.png_Z5.png': 'result_thumb2_S4_Z5.png',
-'thumb2.png_S4.png_Z6.png': 'result_thumb2_S4_Z6.png',
-'thumb2.png_S5.png_Z7.png': 'result_thumb2_S5_Z7.png',
-'thumb2.png_S5.png_Z2.png': 'result_thumb2_S5_Z2.png',
-'thumb2.png_S5.png_Z3.png': 'result_thumb2_S5_Z3.png',
-'thumb2.png_S5.png_Z4.png': 'result_thumb2_S5_Z4.png',
-'thumb2.png_S5.png_Z5.png': 'result_thumb2_S5_Z5.png',
-'thumb2.png_S5.png_Z6.png': 'result_thumb2_S5_Z6.png',
-'thumb2.png_S6.png_Z7.png': 'result_thumb2_S6_Z7.png',
-'thumb2.png_S6.png_Z2.png': 'result_thumb2_S6_Z2.png',
-'thumb2.png_S6.png_Z3.png': 'result_thumb2_S6_Z3.png',
-'thumb2.png_S6.png_Z4.png': 'result_thumb2_S6_Z4.png',
-'thumb2.png_S6.png_Z5.png': 'result_thumb2_S6_Z5.png',
-'thumb2.png_S6.png_Z6.png': 'result_thumb2_S6_Z6.png',
-
-'thumb3.png_S1.png_Z7.png': 'result_thumb3_S1_Z7.png',
-'thumb3.png_S1.png_Z2.png': 'result_thumb3_S1_Z2.png',
-'thumb3.png_S1.png_Z3.png': 'result_thumb3_S1_Z3.png',
-'thumb3.png_S1.png_Z4.png': 'result_thumb3_S1_Z4.png',
-'thumb3.png_S1.png_Z5.png': 'result_thumb3_S1_Z5.png',
-'thumb3.png_S1.png_Z6.png': 'result_thumb3_S1_Z6.png',
-'thumb3.png_S2.png_Z7.png': 'result_thumb3_S2_Z7.png',
-'thumb3.png_S2.png_Z2.png': 'result_thumb3_S2_Z2.png',
-'thumb3.png_S2.png_Z3.png': 'result_thumb3_S2_Z3.png',
-'thumb3.png_S2.png_Z4.png': 'result_thumb3_S2_Z4.png',
-'thumb3.png_S2.png_Z5.png': 'result_thumb3_S2_Z5.png',
-'thumb3.png_S2.png_Z6.png': 'result_thumb3_S2_Z6.png',
-'thumb3.png_S3.png_Z7.png': 'result_thumb3_S3_Z7.png',
-'thumb3.png_S3.png_Z2.png': 'result_thumb3_S3_Z2.png',
-'thumb3.png_S3.png_Z3.png': 'result_thumb3_S3_Z3.png',
-'thumb3.png_S3.png_Z4.png': 'result_thumb3_S3_Z4.png',
-'thumb3.png_S3.png_Z5.png': 'result_thumb3_S3_Z5.png',
-'thumb3.png_S3.png_Z6.png': 'result_thumb3_S3_Z6.png',
-'thumb3.png_S4.png_Z7.png': 'result_thumb3_S4_Z7.png',
-'thumb3.png_S4.png_Z2.png': 'result_thumb3_S4_Z2.png',
-'thumb3.png_S4.png_Z3.png': 'result_thumb3_S4_Z3.png',
-'thumb3.png_S4.png_Z4.png': 'result_thumb3_S4_Z4.png',
-'thumb3.png_S4.png_Z5.png': 'result_thumb3_S4_Z5.png',
-'thumb3.png_S4.png_Z6.png': 'result_thumb3_S4_Z6.png',
-'thumb3.png_S5.png_Z7.png': 'result_thumb3_S5_Z7.png',
-'thumb3.png_S5.png_Z2.png': 'result_thumb3_S5_Z2.png',
-'thumb3.png_S5.png_Z3.png': 'result_thumb3_S5_Z3.png',
-'thumb3.png_S5.png_Z4.png': 'result_thumb3_S5_Z4.png',
-'thumb3.png_S5.png_Z5.png': 'result_thumb3_S5_Z5.png',
-'thumb3.png_S5.png_Z6.png': 'result_thumb3_S5_Z6.png',
-'thumb3.png_S6.png_Z7.png': 'result_thumb3_S6_Z7.png',
-'thumb3.png_S6.png_Z2.png': 'result_thumb3_S6_Z2.png',
-'thumb3.png_S6.png_Z3.png': 'result_thumb3_S6_Z3.png',
-'thumb3.png_S6.png_Z4.png': 'result_thumb3_S6_Z4.png',
-'thumb3.png_S6.png_Z5.png': 'result_thumb3_S6_Z5.png',
-'thumb3.png_S6.png_Z6.png': 'result_thumb3_S6_Z6.png',
-
-'thumb4.jpg_S1.png_Z7.png': 'result_thumb4_S1_Z7.png',
-'thumb4.jpg_S1.png_Z2.png': 'result_thumb4_S1_Z2.png',
-'thumb4.jpg_S1.png_Z3.png': 'result_thumb4_S1_Z3.png',
-'thumb4.jpg_S1.png_Z4.png': 'result_thumb4_S1_Z4.png',
-'thumb4.jpg_S1.png_Z5.png': 'result_thumb4_S1_Z5.png',
-'thumb4.jpg_S1.png_Z6.png': 'result_thumb4_S1_Z6.png',
-'thumb4.jpg_S2.png_Z7.png': 'result_thumb4_S2_Z7.png',
-'thumb4.jpg_S2.png_Z2.png': 'result_thumb4_S2_Z2.png',
-'thumb4.jpg_S2.png_Z3.png': 'result_thumb4_S2_Z3.png',
-'thumb4.jpg_S2.png_Z4.png': 'result_thumb4_S2_Z4.png',
-'thumb4.jpg_S2.png_Z5.png': 'result_thumb4_S2_Z5.png',
-'thumb4.jpg_S2.png_Z6.png': 'result_thumb4_S2_Z6.png',
-'thumb4.jpg_S3.png_Z7.png': 'result_thumb4_S3_Z7.png',
-'thumb4.jpg_S3.png_Z2.png': 'result_thumb4_S3_Z2.png',
-'thumb4.jpg_S3.png_Z3.png': 'result_thumb4_S3_Z3.png',
-'thumb4.jpg_S3.png_Z4.png': 'result_thumb4_S3_Z4.png',
-'thumb4.jpg_S3.png_Z5.png': 'result_thumb4_S3_Z5.png',
-'thumb4.jpg_S3.png_Z6.png': 'result_thumb4_S3_Z6.png',
-'thumb4.jpg_S4.png_Z7.png': 'result_thumb4_S4_Z7.png',
-'thumb4.jpg_S4.png_Z2.png': 'result_thumb4_S4_Z2.png',
-'thumb4.jpg_S4.png_Z3.png': 'result_thumb4_S4_Z3.png',
-'thumb4.jpg_S4.png_Z4.png': 'result_thumb4_S4_Z4.png',
-'thumb4.jpg_S4.png_Z5.png': 'result_thumb4_S4_Z5.png',
-'thumb4.jpg_S4.png_Z6.png': 'result_thumb4_S4_Z6.png',
-'thumb4.jpg_S5.png_Z7.png': 'result_thumb4_S5_Z7.png',
-'thumb4.jpg_S5.png_Z2.png': 'result_thumb4_S5_Z2.png',
-'thumb4.jpg_S5.png_Z3.png': 'result_thumb4_S5_Z3.png',
-'thumb4.jpg_S5.png_Z4.png': 'result_thumb4_S5_Z4.png',
-'thumb4.jpg_S5.png_Z5.png': 'result_thumb4_S5_Z5.png',
-'thumb4.jpg_S5.png_Z6.png': 'result_thumb4_S5_Z6.png',
-'thumb4.jpg_S6.png_Z7.png': 'result_thumb4_S6_Z7.png',
-'thumb4.jpg_S6.png_Z2.png': 'result_thumb4_S6_Z2.png',
-'thumb4.jpg_S6.png_Z3.png': 'result_thumb4_S6_Z3.png',
-'thumb4.jpg_S6.png_Z4.png': 'result_thumb4_S6_Z4.png',
-'thumb4.jpg_S6.png_Z5.png': 'result_thumb4_S6_Z5.png',
-'thumb4.jpg_S6.png_Z6.png': 'result_thumb4_S6_Z6.png',
-
-'thumb5.png_S1.png_Z7.png': 'result_thumb5_S1_Z7.png',
-'thumb5.png_S1.png_Z2.png': 'result_thumb5_S1_Z2.png',
-'thumb5.png_S1.png_Z3.png': 'result_thumb5_S1_Z3.png',
-'thumb5.png_S1.png_Z4.png': 'result_thumb5_S1_Z4.png',
-'thumb5.png_S1.png_Z5.png': 'result_thumb5_S1_Z5.png',
-'thumb5.png_S1.png_Z6.png': 'result_thumb5_S1_Z6.png',
-'thumb5.png_S2.png_Z7.png': 'result_thumb5_S2_Z7.png',
-'thumb5.png_S2.png_Z2.png': 'result_thumb5_S2_Z2.png',
-'thumb5.png_S2.png_Z3.png': 'result_thumb5_S2_Z3.png',
-'thumb5.png_S2.png_Z4.png': 'result_thumb5_S2_Z4.png',
-'thumb5.png_S2.png_Z5.png': 'result_thumb5_S2_Z5.png',
-'thumb5.png_S2.png_Z6.png': 'result_thumb5_S2_Z6.png',
-'thumb5.png_S3.png_Z7.png': 'result_thumb5_S3_Z7.png',
-'thumb5.png_S3.png_Z2.png': 'result_thumb5_S3_Z2.png',
-'thumb5.png_S3.png_Z3.png': 'result_thumb5_S3_Z3.png',
-'thumb5.png_S3.png_Z4.png': 'result_thumb5_S3_Z4.png',
-'thumb5.png_S3.png_Z5.png': 'result_thumb5_S3_Z5.png',
-'thumb5.png_S3.png_Z6.png': 'result_thumb5_S3_Z6.png',
-'thumb5.png_S4.png_Z7.png': 'result_thumb5_S4_Z7.png',
-'thumb5.png_S4.png_Z2.png': 'result_thumb5_S4_Z2.png',
-'thumb5.png_S4.png_Z3.png': 'result_thumb5_S4_Z3.png',
-'thumb5.png_S4.png_Z4.png': 'result_thumb5_S4_Z4.png',
-'thumb5.png_S4.png_Z5.png': 'result_thumb5_S4_Z5.png',
-'thumb5.png_S4.png_Z6.png': 'result_thumb5_S4_Z6.png',
-'thumb5.png_S5.png_Z7.png': 'result_thumb5_S5_Z7.png',
-'thumb5.png_S5.png_Z2.png': 'result_thumb5_S5_Z2.png',
-'thumb5.png_S5.png_Z3.png': 'result_thumb5_S5_Z3.png',
-'thumb5.png_S5.png_Z4.png': 'result_thumb5_S5_Z4.png',
-'thumb5.png_S5.png_Z5.png': 'result_thumb5_S5_Z5.png',
-'thumb5.png_S5.png_Z6.png': 'result_thumb5_S5_Z6.png',
-'thumb5.png_S6.png_Z7.png': 'result_thumb5_S6_Z7.png',
-'thumb5.png_S6.png_Z2.png': 'result_thumb5_S6_Z2.png',
-'thumb5.png_S6.png_Z3.png': 'result_thumb5_S6_Z3.png',
-'thumb5.png_S6.png_Z4.png': 'result_thumb5_S6_Z4.png',
-'thumb5.png_S6.png_Z5.png': 'result_thumb5_S6_Z5.png',
-'thumb5.png_S6.png_Z6.png': 'result_thumb5_S6_Z6.png',
-
-'thumb6.png_S1.png_Z7.png': 'result_thumb6_S1_Z7.png',
-'thumb6.png_S1.png_Z2.png': 'result_thumb6_S1_Z2.png',
-'thumb6.png_S1.png_Z3.png': 'result_thumb6_S1_Z3.png',
-'thumb6.png_S1.png_Z4.png': 'result_thumb6_S1_Z4.png',
-'thumb6.png_S1.png_Z5.png': 'result_thumb6_S1_Z5.png',
-'thumb6.png_S1.png_Z6.png': 'result_thumb6_S1_Z6.png',
-'thumb6.png_S2.png_Z7.png': 'result_thumb6_S2_Z7.png',
-'thumb6.png_S2.png_Z2.png': 'result_thumb6_S2_Z2.png',
-'thumb6.png_S2.png_Z3.png': 'result_thumb6_S2_Z3.png',
-'thumb6.png_S2.png_Z4.png': 'result_thumb6_S2_Z4.png',
-'thumb6.png_S2.png_Z5.png': 'result_thumb6_S2_Z5.png',
-'thumb6.png_S2.png_Z6.png': 'result_thumb6_S2_Z6.png',
-'thumb6.png_S3.png_Z7.png': 'result_thumb6_S3_Z7.png',
-'thumb6.png_S3.png_Z2.png': 'result_thumb6_S3_Z2.png',
-'thumb6.png_S3.png_Z3.png': 'result_thumb6_S3_Z3.png',
-'thumb6.png_S3.png_Z4.png': 'result_thumb6_S3_Z4.png',
-'thumb6.png_S3.png_Z5.png': 'result_thumb6_S3_Z5.png',
-'thumb6.png_S3.png_Z6.png': 'result_thumb6_S3_Z6.png',
-'thumb6.png_S4.png_Z7.png': 'result_thumb6_S4_Z7.png',
-'thumb6.png_S4.png_Z2.png': 'result_thumb6_S4_Z2.png',
-'thumb6.png_S4.png_Z3.png': 'result_thumb6_S4_Z3.png',
-'thumb6.png_S4.png_Z4.png': 'result_thumb6_S4_Z4.png',
-'thumb6.png_S4.png_Z5.png': 'result_thumb6_S4_Z5.png',
-'thumb6.png_S4.png_Z6.png': 'result_thumb6_S4_Z6.png',
-'thumb6.png_S5.png_Z7.png': 'result_thumb6_S5_Z7.png',
-'thumb6.png_S5.png_Z2.png': 'result_thumb6_S5_Z2.png',
-'thumb6.png_S5.png_Z3.png': 'result_thumb6_S5_Z3.png',
-'thumb6.png_S5.png_Z4.png': 'result_thumb6_S5_Z4.png',
-'thumb6.png_S5.png_Z5.png': 'result_thumb6_S5_Z5.png',
-'thumb6.png_S5.png_Z6.png': 'result_thumb6_S5_Z6.png',
-'thumb6.png_S6.png_Z7.png': 'result_thumb6_S6_Z7.png',
-'thumb6.png_S6.png_Z2.png': 'result_thumb6_S6_Z2.png',
-'thumb6.png_S6.png_Z3.png': 'result_thumb6_S6_Z3.png',
-'thumb6.png_S6.png_Z4.png': 'result_thumb6_S6_Z4.png',
-'thumb6.png_S6.png_Z5.png': 'result_thumb6_S6_Z5.png',
-'thumb6.png_S6.png_Z6.png': 'result_thumb6_S6_Z6.png',
-      // ... 继续添加 ...
-    };
-
-
-
-
-  // ==================== 3. 音效 ====================
-    function playSuccessSound() {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine'; o.frequency.value = 880;
-      o.connect(g); g.connect(ctx.destination);
-      g.gain.setValueAtTime(0, ctx.currentTime);
-      g.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-      o.start(); o.stop(ctx.currentTime + 0.3);
-    }
-    // ==================== 新增：检测是否填满并开启/关闭闪烁 ====================
-    function checkAndTriggerCompleteFlash() {
-      const totalSlots = hasTriangleRow ? 3 : 2;
-      const filledCount = images.slice(0, totalSlots).filter(img => img !== null).length;
-
-      if (filledCount === totalSlots && !keepFlashing) {
-        keepFlashing = true;
-        comboTrack.classList.add('complete-flash');
-      } else if (filledCount < totalSlots && keepFlashing) {
-        stopCompleteFlash();  // 只要有空位就立刻停止
-      }
-    }
-
-    // ==================== 4. + 按钮：插入三角行 + 动态添加三角 combo-item ====================
-    plusBtn.addEventListener('click', () => {
-  if (hasTriangleRow) return;
-  hasTriangleRow = true;
-  // === 1. 清空组合框（包括融合结果）===
-  images = [null, null, null];
-  comboItems = Array.from(comboTrack.querySelectorAll('.combo-item'));
-  comboItems.forEach((it, i) => {
-    if (i === 0) it.innerHTML = `<div class="placeholder circle"></div>`;
-    else if (i === 1) it.innerHTML = `<div class="placeholder square"></div>`;
-  });
-  resultOverlay.classList.remove('show');
-  resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
-  updateUI();
-
-  // === 1. 创建三角形行 ===
-  const triangleRow = document.createElement('div');
-  triangleRow.className = 'row';
-  triangleRow.innerHTML = `
-    <div class="left"></div>
-    <div class="right" data-category="2">
-      <div class="thumb-grid">
-        <div class="thumb category2" data-src="S1.png" data-category="2" draggable="true"><img src="S1.png"></div>
-        <div class="thumb category2" data-src="S2.png" data-category="2" draggable="true"><img src="S2.png"></div>
-        <div class="thumb category2" data-src="S3.png" data-category="2" draggable="true"><img src="S3.png"></div>
-        <div class="thumb category2" data-src="S4.png" data-category="2" draggable="true"><img src="S4.png"></div>
-        <div class="thumb category2" data-src="S5.png" data-category="2" draggable="true"><img src="S5.png"></div>
-        <div class="thumb category2" data-src="S6.png" data-category="2" draggable="true"><img src="S6.png"></div>
-      </div>
-    </div>
-  `;
-
-  const squareRow = document.getElementById('rowSquare');
-  squareRow.parentNode.insertBefore(triangleRow, squareRow);
-  plusBtn.remove();
-triangleRow.querySelectorAll('.thumb').forEach(thumb => {
-      initThumbDrag(thumb);
-      addTouchSupport(thumb);  // 关键：添加触摸支持
-    });
-
-  // === 2. 动态插入三角 combo-item 到 正方形之前 ===
-const triangleCombo = document.createElement('div');
-triangleCombo.className = 'combo-item';
-triangleCombo.dataset.index = '1';
-// 插入三角形 combo-item 时
-triangleCombo.innerHTML = `
-  <div class="img-wrapper triangle placeholder">
-    <div></div>
-  </div>
-`;
-
-  const squareCombo = comboTrack.querySelector('.combo-item[data-index="1"]');
-  comboTrack.insertBefore(triangleCombo, squareCombo);
-
-  // 更新原正方形 index 为 2
-  squareCombo.dataset.index = '2';
-
-  // === 3. 开启三列模式 ===
-  comboTrack.classList.add('three');
-
-  refreshDropZones();
+viewBox.addEventListener('mousedown',e=>{
+    dragView = true;
+    mx1 = e.clientX;
+    my1 = e.clientY;
+    viewBox.style.cursor='grabbing';
 });
-    // ==================== 5. 缩略图拖拽初始化 ====================
-    function initThumbDrag(thumb) {
-      const img = thumb.querySelector('img');
-      const filename = img.getAttribute('src');
-      img.src = getImageUrl(filename);
-      thumb.dataset.src = filename;
+window.addEventListener('mousemove',e=>{
+    if(!dragView)return;
+    let dx = e.clientX - mx1;
+    let dy = e.clientY - my1;
+    rotateY += dx * 0.15;
+    rotateX -= dy * 0.15;
+    rotateX = Math.max(-60,Math.min(30,rotateX));
+    // 标准三维旋转公式
+    main3d.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+});
+window.addEventListener('mouseup',()=>{
+    dragView = false;
+    viewBox.style.cursor='grab';
+});
 
-      thumb.addEventListener('dragstart', e => {
-        e.dataTransfer.setData('text/plain', JSON.stringify({
-          src: thumb.dataset.src,
-          cat: thumb.dataset.category
-        }));
-        setTimeout(() => thumb.classList.add('dragging'), 0);
-      });
-      thumb.addEventListener('dragend', () => {
-        thumb.classList.remove('dragging');
-      });
+let dragColor = "";
+document.querySelectorAll('.source-block').forEach(el=>{
+    el.ondragstart = ()=> dragColor = el.style.backgroundColor;
+});
+
+viewBox.ondragover = e=>e.preventDefault();
+viewBox.ondragleave = ()=>redPreview.style.display='none';
+
+viewBox.ondragover = e=>{
+    e.preventDefault();
+    let rect = main3d.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    let col = Math.floor(x/SIZE);
+    let row = Math.floor(y/SIZE);
+    let idx = row*3+col;
+    if(idx>=0&&idx<6&&!gridUsed[idx]){
+        curHoverIndex=idx;
+        redPreview.style.left=gridPos[idx][0]+'px';
+        redPreview.style.top=gridPos[idx][1]+'px';
+        redPreview.style.display='block';
+    }else{
+        redPreview.style.display='none';
+        curHoverIndex=-1;
     }
-    // ==================== 新增：停止闪烁函数 ====================
-    function stopCompleteFlash() {
-      keepFlashing = false;
-      comboTrack.classList.remove('complete-flash');
-    }
-
-    // ==================== 6. 拖拽目标区 ====================
-    let dragHandlers = {};
-
-    function refreshDropZones() {
-      // 移除旧事件
-      if (dragHandlers.over) comboTrack.removeEventListener('dragover', dragHandlers.over);
-      if (dragHandlers.leave) comboTrack.removeEventListener('dragleave', dragHandlers.leave);
-      if (dragHandlers.drop) comboTrack.removeEventListener('drop', dragHandlers.drop);
-
-      // === 新增：插入加号 ===
-  comboTrack.querySelectorAll('.plus-sign').forEach(el => el.remove());
-
-      // 重新获取
-      comboItems = Array.from(comboTrack.querySelectorAll('.combo-item'));
-
-      dragHandlers.over = (e) => {
-        e.preventDefault();
-        const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-        const cat = parseInt(data.cat, 10);
-
-        if ((cat === 1 && images[0]) || (cat === 2 && images[1]) || (cat === 3 && images[2])) {
-          comboItems.forEach(it => it.classList.remove('drag-over'));
-          return;
-        }
-
-        comboItems.forEach((it, idx) => {
-          it.classList.toggle('drag-over', images[idx] === null);
-        });
-      };
-
-      dragHandlers.leave = () => {
-        comboItems.forEach(it => it.classList.remove('drag-over'));
-      };
-dragHandlers.drop = (e) => {
-  e.preventDefault();
-  comboItems.forEach(it => it.classList.remove('drag-over'));
-
-  const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
-  const cat = parseInt(data.cat, 10);
-  let targetIdx = -1;
-
-  if (cat === 1) targetIdx = 0;                    // 圆形
-  else if (cat === 2) targetIdx = 1;               // 三角形
-  else if (cat === 3) targetIdx = hasTriangleRow ? 2 : 1;  // 正方形
-
-  if (targetIdx !== -1 && images[targetIdx] === null) {
-    const full = getImageUrl(data.src);
-    images[targetIdx] = full;
-if (cat === 2) {
-    // 仅三角形用 wrapper
-    comboItems[targetIdx].innerHTML = `
-      <div class="img-wrapper triangle">
-        <img src="${full}" alt="">
-      </div>
-    `;
-  } else {
-    // 圆形和方形保持原样
-    const shape = cat === 1 ? 'circle' : 'square';
-    comboItems[targetIdx].innerHTML = `<img src="${full}" class="${shape}" alt="">`;
-  }
-    
-    updateUI();
-    checkAndTriggerCompleteFlash();
-    playSuccessSound();
-    
-  }
 };
 
-      comboTrack.addEventListener('dragover', dragHandlers.over);
-      comboTrack.addEventListener('dragleave', dragHandlers.leave);
-      comboTrack.addEventListener('drop', dragHandlers.drop);
-
-      // === 插入固定的加号（无论是否拖入图片）===
-  comboTrack.querySelectorAll('.plus-sign').forEach(el => el.remove());
-  const items = comboTrack.querySelectorAll('.combo-item');
-  for (let i = 0; i < items.length - 1; i++) {
-    const plus = document.createElement('div');
-    plus.className = 'plus-sign';
-    // plus.textContent = '+';
-    items[i].after(plus);
-  }
-  // 强制重新定位 result-overlay（防止被遮挡）
-resultOverlay.style.right = '0';
-resultOverlay.style.top = '50%';
-resultOverlay.style.transform = 'translateY(-50%)';
-    }
-
-
-    // ==================== 新增：检查是否全部填满并触发闪烁动画 ====================
-    // function checkAndTriggerCompleteFlash() {
-    //   const totalSlots = hasTriangleRow ? 3 : 2;
-    //   const filledCount = images.slice(0, totalSlots).filter(img => img !== null).length;
-
-    //   if (filledCount === totalSlots && !isAnimating) {
-    //     isAnimating = true;
-    //     comboTrack.classList.add('complete-flash');
-    //     setTimeout(() => {
-    //       comboTrack.classList.remove('complete-flash');
-    //       isAnimating = false;
-    //     }, 1800); // 动画时长
-    //   }
-    // }
-  // ==================== 7. 关键：触摸拖拽支持（保留原图，复制模式） ====================
-function addTouchSupport(thumb) {
-  let ghost = null; // 跟随手指的“幽灵副本”
-
-  thumb.addEventListener('touchstart', e => {
+viewBox.ondrop = e=>{
     e.preventDefault();
-    const touch = e.touches[0];
-    const data = {
-      src: thumb.dataset.src,
-      cat: thumb.dataset.category
-    };
-
-    // 创建跟随手指的“幽灵副本”
-    ghost = document.createElement('div');
-    ghost.className = 'thumb dragging';
-    ghost.style.position = 'fixed';
-    ghost.style.width = '90px';
-    ghost.style.height = '90px';
-    ghost.style.pointerEvents = 'none';
-    ghost.style.zIndex = '1000';
-    ghost.style.opacity = '0.7';
-    ghost.style.transform = 'scale(0.95)';
-    ghost.style.left = (touch.clientX - 45) + 'px';
-    ghost.style.top = (touch.clientY - 45) + 'px';
-    ghost.style.background = '#fff';
-    ghost.style.borderRadius = thumb.classList.contains('category2') ? '0' : '50%';
-    ghost.style.clipPath = thumb.classList.contains('category2') ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none';
-    ghost.style.boxShadow = '0 8px 20px rgba(0,0,0,0.3)';
-    ghost.style.overflow = 'hidden';
-    ghost.style.border = '2px solid var(--highlight)';
-
-    const img = document.createElement('img');
-    img.src = getImageUrl(data.src);
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'contain';
-    if (thumb.classList.contains('category2')) {
-      img.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
-    }
-    ghost.appendChild(img);
-    document.body.appendChild(ghost);
-
-    // 存储数据
-    ghost.dataset.dragData = JSON.stringify(data);
-  }, { passive: false });
-
-  thumb.addEventListener('touchmove', e => {
-    if (!ghost) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    ghost.style.left = (touch.clientX - 45) + 'px';
-    ghost.style.top = (touch.clientY - 45) + 'px';
-
-    // 高亮可放置区
-    const under = document.elementFromPoint(touch.clientX, touch.clientY);
-    comboItems.forEach(it => it.classList.remove('drag-over'));
-    if (under) {
-      const item = under.closest('.combo-item');
-      if (item && images[parseInt(item.dataset.index)] === null) {
-        item.classList.add('drag-over');
-      }
-    }
-  }, { passive: false });
-
-  thumb.addEventListener('touchend', e => {
-    if (!ghost) return;
-    e.preventDefault();
-
-    const touch = e.changedTouches[0];
-    const under = document.elementFromPoint(touch.clientX, touch.clientY);
-    const targetItem = under?.closest('.combo-item');
-
-    // 清理高亮
-    comboItems.forEach(it => it.classList.remove('drag-over'));
-
-    if (targetItem) {
-      const idx = parseInt(targetItem.dataset.index);
-      const data = JSON.parse(ghost.dataset.dragData);
-      const cat = parseInt(data.cat);
-      let targetIdx = cat === 1 ? 0 : cat === 2 ? 1 : hasTriangleRow ? 2 : 1;
-
-      if (targetIdx === idx && images[targetIdx] === null) {
-        images[targetIdx] = getImageUrl(data.src);
-        if (cat === 2) {
-          targetItem.innerHTML = `<div class="img-wrapper triangle"><img src="${images[targetIdx]}"></div>`;
-        } else {
-          const shape = cat === 1 ? 'circle' : 'square';
-          targetItem.innerHTML = `<img src="${images[targetIdx]}" class="${shape}">`;
-        }
-        updateUI();
-        checkAndTriggerCompleteFlash();
-        playSuccessSound();
-      }
-    }
-
-    // 移除幽灵副本
-    ghost.remove();
-    ghost = null;
-  }, { passive: false });
-}
-
-    // ==================== 7. 重置 ====================
-  resetBtn.addEventListener('click', () => {
-  images = [null, null, null];
-  comboItems = Array.from(comboTrack.querySelectorAll('.combo-item'));
-
-  comboItems.forEach((it, i) => {
-    if (i === 0) {
-      it.innerHTML = `<div class="placeholder circle"></div>`;
-    } else if (i === 1) {
-      it.innerHTML = `<div class="img-wrapper triangle placeholder"><div></div></div>`;
-    } else if (i === 2 && hasTriangleRow) {
-      it.innerHTML = `<div class="placeholder square"></div>`;
-    }
-  });
-
-  resultOverlay.classList.remove('show');
-  resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
-  updateUI();
-  stopCompleteFlash();  // 停止闪烁
-  refreshDropZones();
-});
-    // ==================== 8. UI 状态 ====================
-    function updateUI() {
-      const any = images.some(i => i);
-      resetBtn.classList.toggle('visible', any);
-      fusionBtn.disabled = images.filter(i => i).length < 2;
-    }
-
-    // ==================== 9. AI 融合 ====================
-    fusionBtn.addEventListener('click', () => {
-      const filled = images.filter(i => i);
-      if (filled.length < 2) {
-        alert('请至少拖入 2 张图片才能进行融合！');
-        return;
-      }
-
-      const keyParts = [];
-      if (images[0]) keyParts.push(images[0].split('/').pop());
-      if (images[1]) keyParts.push(images[1].split('/').pop());
-      if (images[2]) keyParts.push(images[2].split('/').pop());
-      const key = keyParts.join('_');
-
-      resultOverlay.classList.add('show');
-      resultOverlay.innerHTML = `<div class="spinner"></div><div class="text">融合中…</div>`;
-      fusionBtn.disabled = true;
-
-      setTimeout(() => {
-        const resultFile = fusionMap[key] || 'result.png';
-        resultOverlay.innerHTML = `<img src="${getImageUrl(resultFile)}" alt="融合结果">`;
-        fusionBtn.disabled = false;
-        playSuccessSound();
-        stopCompleteFlash();  // 融合完成 → 停止闪烁
-      }, 2000);
+    redPreview.style.display='none';
+    if(curHoverIndex===-1||!dragColor)return;
+    gridUsed[curHoverIndex]=true;
+    let [px,py] = gridPos[curHoverIndex];
+    let cube = document.createElement('div');
+    cube.className='solid-block';
+    cube.style.left=px+'px';
+    cube.style.top=py+'px';
+    // 一次性创建完整6个面
+    ['front','back','left','right','top','bottom'].forEach(n=>{
+        let d=document.createElement('div');
+        d.className='b-'+n;
+        d.style.background=dragColor;
+        cube.appendChild(d);
     });
-
-    // ==================== 10. 初始化 ====================
-  document.querySelectorAll('.thumb').forEach(thumb => {
-    initThumbDrag(thumb);
-    addTouchSupport(thumb);  // 关键：所有缩略图添加触摸支持
-  });
-    refreshDropZones();
-    
-    updateUI();
-
-    // 自动展开圆形和正方形
-    document.querySelectorAll('.right[data-category="1"], .right[data-category="3"]').forEach(panel => {
-      panel.classList.add('show');
-    });
-  </script>
+    main3d.appendChild(cube);
+};
+</script>
 </body>
 </html>
